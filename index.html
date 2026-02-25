@@ -62,12 +62,14 @@
       <div id="cartItems" class="drawer__body"></div>
 
       <div class="drawer__footer">
-        <div class="priceRow">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
           <div>
             <div class="muted">Subtotal</div>
             <div style="font-weight:900;font-size:18px" id="subtotal">R$ 0,00</div>
           </div>
-          <a class="btn btn--primary" href="./checkout.html">Finalizar</a>
+
+          <!-- ✅ vira botão (não link), só navega se tiver item -->
+          <button id="goCheckoutBtn" class="btn btn--primary" type="button">Finalizar compra</button>
         </div>
 
         <button id="clearCartBtn" class="btn btn--danger" type="button">Esvaziar carrinho</button>
