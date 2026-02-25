@@ -19,9 +19,9 @@
 
     <nav class="container chips" aria-label="Ações">
       <button id="btnNovo" class="chip is-active" type="button">Cadastrar produto</button>
-      <button id="btnLista" class="chip" type="button">Lista de produtos</button>
-      <button id="btnExport" class="chip" type="button">Exportar JSON</button>
-      <button id="btnImport" class="chip" type="button">Importar JSON</button>
+      <button id="btnLista" class="chip" type="button">Lista</button>
+      <button id="btnExport" class="chip" type="button">Exportar</button>
+      <button id="btnImport" class="chip" type="button">Importar</button>
       <button id="btnReset" class="chip" type="button">Restaurar padrão</button>
     </nav>
   </header>
@@ -29,12 +29,12 @@
   <main class="container" style="padding:18px 0 26px">
     <section class="hero" style="grid-template-columns: 1.15fr .85fr;">
       <div class="hero__text">
-        <h1>Gerenciar produtos</h1>
+        <h1>Produtos (sem links externos)</h1>
         <p>
-          Cadastre itens rapidamente. Tudo fica salvo no navegador (localStorage) e aparece no catálogo.
+          Cadastre, edite e deixe disponível para venda. A foto é enviada pelo botão e fica salva no navegador.
         </p>
         <p class="muted" style="margin:0">
-          Dica: use <b>Exportar JSON</b> para guardar um backup e <b>Importar JSON</b> para restaurar.
+          Dica: use <b>Exportar</b> para guardar backup e <b>Importar</b> para restaurar em outro aparelho.
         </p>
       </div>
 
@@ -42,11 +42,11 @@
         <div class="hero__cardTitle">Resumo</div>
         <div class="totals">
           <div class="totals__row">
-            <span>Total de produtos</span>
+            <span>Total</span>
             <b id="totalProdutos">0</b>
           </div>
           <div class="totals__row">
-            <span>Em estoque</span>
+            <span>Ativos</span>
             <b id="totalAtivos">0</b>
           </div>
         </div>
@@ -64,11 +64,12 @@
 
         <form id="produtoForm" class="form">
           <input id="editId" type="hidden" />
+          <input id="imageData" type="hidden" />
 
           <div class="form__row">
             <label class="label">
               Nome do produto
-              <input id="nome" required placeholder="Ex: Nike Air Zoom" />
+              <input id="nome" required placeholder="Ex: Nike Air Max" />
             </label>
 
             <label class="label">
@@ -90,8 +91,11 @@
             </label>
 
             <label class="label">
-              Numeração (texto)
-              <input id="num" required placeholder="Ex: Num: 37 ao 43" />
+              Disponível para venda?
+              <select id="ativo" required>
+                <option value="true">Sim</option>
+                <option value="false">Não</option>
+              </select>
             </label>
           </div>
 
@@ -109,36 +113,43 @@
 
           <div class="form__row">
             <label class="label">
-              Link do produto (Mercado Livre / outro)
-              <input id="link" required placeholder="Cole aqui o link do produto" />
+              Tamanhos (separe por vírgula)
+              <input id="tamanhos" required placeholder="Ex: 37,38,39,40,41,42" />
             </label>
 
             <label class="label">
-              URL da imagem (opcional)
-              <input id="img" placeholder="https://... (se vazio, usa imagem padrão)" />
+              Cores (opcional, separe por vírgula)
+              <input id="cores" placeholder="Ex: Preto, Branco, Azul" />
             </label>
           </div>
 
           <div class="form__row">
             <label class="label" style="grid-column:1/-1">
               Descrição
-              <input id="desc" required placeholder="Ex: Tênis leve, confortável..." />
+              <input id="desc" required placeholder="Ex: Confortável, leve, solado macio..." />
             </label>
           </div>
 
           <div class="form__row">
-            <label class="label">
-              Disponível para venda?
-              <select id="ativo" required>
-                <option value="true">Sim</option>
-                <option value="false">Não</option>
-              </select>
-            </label>
+            <div class="label" style="grid-column:1/-1">
+              Foto do produto
+              <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                <input id="file" type="file" accept="image/*" />
+                <button id="btnRemoverFoto" class="btn btn--ghost" type="button">Remover foto</button>
+              </div>
+              <div class="muted" style="margin-top:6px">A imagem é salva no navegador (recomendado foto leve).</div>
 
-            <label class="label">
-              Tag extra (opcional)
-              <input id="tag" placeholder="Ex: Promo / Lançamento" />
-            </label>
+              <div style="
+                margin-top:10px;
+                border:1px solid rgba(255,255,255,.08);
+                background:rgba(255,255,255,.03);
+                border-radius:16px;
+                overflow:hidden;
+                width:min(520px,100%);
+              ">
+                <img id="preview" alt="Prévia" style="display:block;width:100%;height:240px;object-fit:cover" />
+              </div>
+            </div>
           </div>
 
           <div class="form__row">
@@ -148,7 +159,7 @@
           </div>
 
           <div class="muted" style="margin-top:10px">
-            Obs: os dados ficam salvos no seu dispositivo. Para usar em outro celular/PC, exporte e importe o JSON.
+            Importante: por ser salvo localmente, se você limpar dados do navegador, perde os produtos (use exportar).
           </div>
         </form>
       </div>
@@ -176,7 +187,7 @@
         <div class="drawer__header">
           <div>
             <div class="drawer__title" id="jsonTitle">JSON</div>
-            <div class="muted" id="jsonSubtitle">Copie e guarde como backup</div>
+            <div class="muted" id="jsonSubtitle">Backup</div>
           </div>
           <button class="btn btn--ghost" type="button" data-close>✕</button>
         </div>
@@ -188,9 +199,6 @@
             background:rgba(255,255,255,.06);
             color:var(--text);padding:12px;border-radius:12px;outline:none;
           "></textarea>
-          <div class="muted" style="margin-top:10px">
-            Importação: cole o JSON e clique em <b>Aplicar</b>.
-          </div>
         </div>
 
         <div class="drawer__footer">
@@ -226,14 +234,14 @@
 
   <script>
     (function(){
-      const LS_PRODUCTS = "magao_products_v1";
+      const LS_PRODUCTS = "magao_products_v2"; // versão nova
 
-      // -------- helpers ----------
       const $ = (id) => document.getElementById(id);
 
       function normalize(s){
         return (s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
       }
+
       function moneyToNumberBR(v){
         const raw = (v||"").toString().trim();
         if(!raw) return null;
@@ -241,9 +249,23 @@
         const num = Number(cleaned);
         return Number.isFinite(num) ? num : null;
       }
+
       function genId(){
         return "mt-" + Math.random().toString(16).slice(2, 8) + "-" + Date.now().toString(16).slice(-4);
       }
+
+      function escapeHtml(str){
+        return String(str).replace(/[&<>"']/g, (m)=>({
+          "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+        }[m]));
+      }
+      function escapeAttr(str){ return String(str).replace(/"/g,'&quot;'); }
+
+      function capCategory(cat){
+        const map = {corrida:"Corrida",casual:"Casual",basket:"Basquete",skate:"Skate"};
+        return map[cat]||cat;
+      }
+
       function defaultSvg(name){
         const t = (name||"Produto").split(" ").slice(0,2).join(" ");
         const svg = `
@@ -256,18 +278,9 @@
             </defs>
             <rect width="100%" height="100%" fill="url(#g)"/>
             <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
-              font-family="Arial" font-size="44" fill="#e9ecf2" opacity="0.95">${escapeXml(t)}</text>
+              font-family="Arial" font-size="44" fill="#e9ecf2" opacity="0.95">${escapeHtml(t)}</text>
           </svg>`;
         return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.trim());
-      }
-      function escapeXml(unsafe){
-        return String(unsafe).replace(/[<>&'"]/g, c => ({
-          "<":"&lt;",">":"&gt;","&":"&amp;","'":"&apos;",'"':"&quot;"
-        }[c]));
-      }
-      function capCategory(cat){
-        const map = {corrida:"Corrida",casual:"Casual",basket:"Basquete",skate:"Skate"};
-        return map[cat]||cat;
       }
 
       function loadProducts(){
@@ -276,21 +289,43 @@
           const arr = raw ? JSON.parse(raw) : null;
           if(Array.isArray(arr) && arr.length) return arr;
         }catch{}
-        // Padrão inicial (para não ficar vazio)
         return [
-          { id:"mt-001", name:"Tênis Corrida AirFlow Pro", brand:"Magão", category:"corrida", price:249.9, oldPrice:329.9, sizeInfo:"Num: 37 ao 43", desc:"Leve, confortável e com boa absorção de impacto.", mlLink:"https://www.mercadolivre.com.br/", image:"", active:true, tag:"" },
-          { id:"mt-002", name:"Tênis Casual Street Lux", brand:"Urban", category:"casual", price:189.9, oldPrice:229.9, sizeInfo:"Num: 36 ao 42", desc:"Estilo para o dia a dia, combina com tudo.", mlLink:"https://www.mercadolivre.com.br/", image:"", active:true, tag:"" }
+          {
+            id:"mt-001",
+            name:"Tênis Corrida AirFlow Pro",
+            brand:"Magão",
+            category:"corrida",
+            price:249.9,
+            oldPrice:329.9,
+            sizes:["37","38","39","40","41","42","43"],
+            colors:["Preto","Branco"],
+            desc:"Leve, confortável e com boa absorção de impacto.",
+            image:"",
+            active:true
+          },
+          {
+            id:"mt-002",
+            name:"Tênis Casual Street Lux",
+            brand:"Urban",
+            category:"casual",
+            price:189.9,
+            oldPrice:null,
+            sizes:["36","37","38","39","40","41","42"],
+            colors:["Branco"],
+            desc:"Estilo para o dia a dia, combina com tudo.",
+            image:"",
+            active:true
+          }
         ];
       }
-
       function saveProducts(list){
         localStorage.setItem(LS_PRODUCTS, JSON.stringify(list));
       }
 
       let products = loadProducts();
-      saveProducts(products); // garante persistência se estava vazio
+      saveProducts(products);
 
-      // -------- UI refs ----------
+      // refs
       const secForm = $("secForm");
       const secLista = $("secLista");
 
@@ -305,17 +340,21 @@
 
       const produtoForm = $("produtoForm");
       const editId = $("editId");
+
       const nome = $("nome");
       const marca = $("marca");
       const categoria = $("categoria");
-      const num = $("num");
+      const ativo = $("ativo");
       const preco = $("preco");
       const precoAntigo = $("precoAntigo");
-      const link = $("link");
-      const img = $("img");
+      const tamanhos = $("tamanhos");
+      const cores = $("cores");
       const desc = $("desc");
-      const ativo = $("ativo");
-      const tag = $("tag");
+
+      const file = $("file");
+      const imageData = $("imageData");
+      const preview = $("preview");
+      const btnRemoverFoto = $("btnRemoverFoto");
 
       const btnLimpar = $("btnLimpar");
       const btnExcluir = $("btnExcluir");
@@ -332,13 +371,14 @@
       const btnCopiarJson = $("btnCopiarJson");
       const btnAplicarJson = $("btnAplicarJson");
 
-      // -------- views ----------
+      function moneyBRL(v){
+        return (Number(v)||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+      }
+
       function setTab(tab){
-        // tabs (chips)
         [btnNovo, btnLista].forEach(b => b.classList.remove("is-active"));
         if(tab === "novo") btnNovo.classList.add("is-active");
         if(tab === "lista") btnLista.classList.add("is-active");
-
         secForm.style.display = tab === "novo" ? "" : "none";
         secLista.style.display = tab === "lista" ? "" : "none";
       }
@@ -346,26 +386,25 @@
       btnNovo.addEventListener("click", ()=> setTab("novo"));
       btnLista.addEventListener("click", ()=> { setTab("lista"); renderLista(); });
 
-      // -------- summary ----------
       function renderResumo(){
         totalProdutos.textContent = String(products.length);
         totalAtivos.textContent = String(products.filter(p=>p.active).length);
       }
 
-      // -------- form ----------
       function clearForm(){
         editId.value = "";
         nome.value = "";
         marca.value = "";
         categoria.value = "";
-        num.value = "";
+        ativo.value = "true";
         preco.value = "";
         precoAntigo.value = "";
-        link.value = "";
-        img.value = "";
+        tamanhos.value = "";
+        cores.value = "";
         desc.value = "";
-        ativo.value = "true";
-        tag.value = "";
+        imageData.value = "";
+        file.value = "";
+        preview.src = defaultSvg("Sem foto");
         btnExcluir.style.display = "none";
       }
 
@@ -374,14 +413,14 @@
         nome.value = p.name || "";
         marca.value = p.brand || "";
         categoria.value = p.category || "";
-        num.value = p.sizeInfo || "";
+        ativo.value = String(!!p.active);
         preco.value = (p.price ?? "").toString().replace(".", ",");
         precoAntigo.value = (p.oldPrice ?? "").toString().replace(".", ",");
-        link.value = p.mlLink || "";
-        img.value = p.image || "";
+        tamanhos.value = (p.sizes || []).join(",");
+        cores.value = (p.colors || []).join(",");
         desc.value = p.desc || "";
-        ativo.value = String(!!p.active);
-        tag.value = p.tag || "";
+        imageData.value = p.image || "";
+        preview.src = p.image || defaultSvg(p.name);
         btnExcluir.style.display = "";
       }
 
@@ -390,8 +429,7 @@
       btnExcluir.addEventListener("click", ()=>{
         const id = editId.value;
         if(!id) return;
-        const ok = confirm("Deseja excluir este produto?");
-        if(!ok) return;
+        if(!confirm("Deseja excluir este produto?")) return;
         products = products.filter(p=>p.id !== id);
         saveProducts(products);
         renderResumo();
@@ -400,6 +438,53 @@
         alert("Produto excluído.");
       });
 
+      // upload foto
+      file.addEventListener("change", async ()=>{
+        const f = file.files && file.files[0];
+        if(!f) return;
+
+        const okTypes = ["image/jpeg","image/png","image/webp","image/jpg"];
+        if(!okTypes.includes(f.type)){
+          alert("Use JPG, PNG ou WEBP.");
+          file.value = "";
+          return;
+        }
+
+        // limite simples para não explodir o localStorage
+        const maxBytes = 900 * 1024; // ~900KB
+        if(f.size > maxBytes){
+          alert("Foto muito pesada. Use uma imagem mais leve (até ~900KB).");
+          file.value = "";
+          return;
+        }
+
+        const dataUrl = await readFileAsDataURL(f);
+        imageData.value = dataUrl;
+        preview.src = dataUrl;
+      });
+
+      btnRemoverFoto.addEventListener("click", ()=>{
+        file.value = "";
+        imageData.value = "";
+        preview.src = defaultSvg(nome.value || "Sem foto");
+      });
+
+      function readFileAsDataURL(file){
+        return new Promise((resolve, reject)=>{
+          const fr = new FileReader();
+          fr.onload = () => resolve(String(fr.result));
+          fr.onerror = reject;
+          fr.readAsDataURL(file);
+        });
+      }
+
+      function parseListComma(v){
+        return (v||"")
+          .split(",")
+          .map(s=>s.trim())
+          .filter(Boolean);
+      }
+
       produtoForm.addEventListener("submit", (e)=>{
         e.preventDefault();
 
@@ -407,25 +492,29 @@
         if(pPrice === null) { alert("Preço inválido."); return; }
 
         const pOld = moneyToNumberBR(precoAntigo.value);
-        const isActive = ativo.value === "true";
+        const sizesArr = parseListComma(tamanhos.value);
+        if(!sizesArr.length){
+          alert("Informe ao menos 1 tamanho (ex: 37,38,39).");
+          return;
+        }
+        const colorsArr = parseListComma(cores.value);
 
         const payload = {
           id: editId.value || genId(),
           name: nome.value.trim(),
           brand: marca.value.trim(),
           category: categoria.value,
-          sizeInfo: num.value.trim(),
           price: pPrice,
           oldPrice: pOld,
-          mlLink: link.value.trim(),
-          image: img.value.trim(),
+          sizes: sizesArr,
+          colors: colorsArr,
           desc: desc.value.trim(),
-          active: isActive,
-          tag: tag.value.trim()
+          image: imageData.value.trim(),
+          active: ativo.value === "true"
         };
 
-        if(!payload.name || !payload.brand || !payload.category || !payload.sizeInfo || !payload.mlLink || !payload.desc){
-          alert("Preencha todos os campos obrigatórios.");
+        if(!payload.name || !payload.brand || !payload.category || !payload.desc){
+          alert("Preencha os campos obrigatórios.");
           return;
         }
 
@@ -436,12 +525,11 @@
         saveProducts(products);
         renderResumo();
         renderLista();
-
         clearForm();
         alert("Produto salvo!");
       });
 
-      // -------- lista ----------
+      // lista
       function renderLista(){
         const q = normalize(filtro.value);
         const list = products
@@ -454,32 +542,32 @@
           });
 
         listaInfo.textContent = `Mostrando ${list.length} produto(s)`;
-
         lista.innerHTML = list.map(p=>{
-          const imgSrc = p.image && p.image.startsWith("http") ? p.image : (p.image || defaultSvg(p.name));
+          const imgSrc = p.image || defaultSvg(p.name);
           return `
             <article class="card">
               <div class="card__img">
-                <img src="${imgSrc}" alt="${escapeAttr(p.name)}">
+                <img src="${imgSrc}" alt="${escapeAttr(p.name)}" />
               </div>
               <div class="card__body">
                 <div class="card__title">${escapeHtml(p.name)}</div>
                 <div class="card__meta">
                   <span class="pill">${escapeHtml(p.brand)}</span>
                   <span class="pill">${escapeHtml(capCategory(p.category))}</span>
-                  <span class="pill">${escapeHtml(p.sizeInfo)}</span>
-                  ${p.tag ? `<span class="pill">${escapeHtml(p.tag)}</span>` : ""}
-                  ${p.active ? `<span class="pill" style="border-color:rgba(110,231,255,.35)">Ativo</span>` : `<span class="pill" style="border-color:rgba(255,107,107,.35)">Inativo</span>`}
+                  <span class="pill">${p.active ? "Ativo" : "Inativo"}</span>
                 </div>
+                <div class="muted">${escapeHtml(p.desc)}</div>
                 <div class="priceRow">
                   <div>
                     <div class="price">${moneyBRL(p.price)}</div>
-                    ${p.oldPrice ? `<div class="old">${moneyBRL(p.oldPrice)}</div>` : `<div class="old">—</div>`}
+                    <div class="old">${p.oldPrice ? moneyBRL(p.oldPrice) : "—"}</div>
                   </div>
                 </div>
+                <div class="muted">Tamanhos: ${escapeHtml((p.sizes||[]).join(", "))}</div>
+                ${p.colors && p.colors.length ? `<div class="muted">Cores: ${escapeHtml(p.colors.join(", "))}</div>` : ""}
+
                 <div class="card__actions">
                   <button class="btn btn--primary" type="button" data-edit="${p.id}">Editar</button>
-                  <a class="btn" href="${p.mlLink}" target="_blank" rel="noopener">Abrir link</a>
                 </div>
               </div>
             </article>
@@ -489,17 +577,6 @@
         if(!list.length){
           lista.innerHTML = `<div class="muted" style="padding:10px">Nenhum produto encontrado.</div>`;
         }
-      }
-
-      function moneyBRL(v){ return Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
-
-      function escapeHtml(str){
-        return String(str).replace(/[&<>"']/g, (m)=>({
-          "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-        }[m]));
-      }
-      function escapeAttr(str){
-        return String(str).replace(/"/g,'&quot;');
       }
 
       lista.addEventListener("click", (e)=>{
@@ -516,7 +593,7 @@
       filtro.addEventListener("input", renderLista);
       limparFiltro.addEventListener("click", ()=>{ filtro.value=""; renderLista(); filtro.focus(); });
 
-      // -------- modal JSON ----------
+      // JSON modal
       function openJsonModal(){
         jsonModal.classList.add("is-open");
         jsonModal.setAttribute("aria-hidden","false");
@@ -534,14 +611,14 @@
 
       btnExport.addEventListener("click", ()=>{
         jsonTitle.textContent = "Exportar produtos (JSON)";
-        jsonSubtitle.textContent = "Copie e guarde como backup";
+        jsonSubtitle.textContent = "Copie e guarde";
         jsonArea.value = JSON.stringify(products, null, 2);
         openJsonModal();
       });
 
       btnImport.addEventListener("click", ()=>{
         jsonTitle.textContent = "Importar produtos (JSON)";
-        jsonSubtitle.textContent = "Cole o JSON e clique em Aplicar";
+        jsonSubtitle.textContent = "Cole e clique em Aplicar";
         jsonArea.value = "";
         openJsonModal();
       });
@@ -549,9 +626,9 @@
       btnCopiarJson.addEventListener("click", async ()=>{
         try{
           await navigator.clipboard.writeText(jsonArea.value);
-          alert("JSON copiado!");
+          alert("Copiado!");
         }catch{
-          alert("Não consegui copiar automaticamente. Selecione e copie manualmente.");
+          alert("Não consegui copiar automaticamente. Copie manualmente.");
         }
       });
 
@@ -559,34 +636,34 @@
         try{
           const parsed = JSON.parse(jsonArea.value || "[]");
           if(!Array.isArray(parsed)) throw new Error("Formato inválido");
-          // valida mínimo
           for(const p of parsed){
-            if(!p.id || !p.name || !p.brand || !p.category) throw new Error("JSON incompleto");
+            if(!p.id || !p.name || !p.brand || !p.category || !p.price || !p.sizes) throw new Error("JSON incompleto");
           }
           products = parsed.map(p=>({
             ...p,
-            active: !!p.active
+            active: !!p.active,
+            sizes: Array.isArray(p.sizes) ? p.sizes : [],
+            colors: Array.isArray(p.colors) ? p.colors : []
           }));
           saveProducts(products);
           renderResumo();
           renderLista();
           closeJsonModal();
           alert("Importado com sucesso!");
-        }catch(err){
-          alert("JSON inválido. Verifique e tente novamente.");
+        }catch{
+          alert("JSON inválido.");
         }
       });
 
       btnReset.addEventListener("click", ()=>{
-        const ok = confirm("Restaurar produtos padrão? Isso vai substituir sua lista atual.");
-        if(!ok) return;
+        if(!confirm("Restaurar padrão? Isso substitui sua lista atual.")) return;
         localStorage.removeItem(LS_PRODUCTS);
         products = loadProducts();
         saveProducts(products);
         renderResumo();
         renderLista();
         clearForm();
-        alert("Restaurado para o padrão.");
+        alert("Restaurado.");
       });
 
       // init
