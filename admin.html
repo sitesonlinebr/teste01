@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin • Magão Tênis</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar__row">
+      <a class="brand" href="./index.html" aria-label="Voltar ao site">
+        <span class="brand__logo">MT</span>
+        <span class="brand__name">Admin</span>
+      </a>
+
+      <a class="btn btn--ghost" href="./index.html">← Ver catálogo</a>
+    </div>
+
+    <nav class="container chips" aria-label="Ações">
+      <button id="btnNovo" class="chip is-active" type="button">Cadastrar produto</button>
+      <button id="btnLista" class="chip" type="button">Lista de produtos</button>
+      <button id="btnExport" class="chip" type="button">Exportar JSON</button>
+      <button id="btnImport" class="chip" type="button">Importar JSON</button>
+      <button id="btnReset" class="chip" type="button">Restaurar padrão</button>
+    </nav>
+  </header>
+
+  <main class="container" style="padding:18px 0 26px">
+    <section class="hero" style="grid-template-columns: 1.15fr .85fr;">
+      <div class="hero__text">
+        <h1>Gerenciar produtos</h1>
+        <p>
+          Cadastre itens rapidamente. Tudo fica salvo no navegador (localStorage) e aparece no catálogo.
+        </p>
+        <p class="muted" style="margin:0">
+          Dica: use <b>Exportar JSON</b> para guardar um backup e <b>Importar JSON</b> para restaurar.
+        </p>
+      </div>
+
+      <div class="hero__card">
+        <div class="hero__cardTitle">Resumo</div>
+        <div class="totals">
+          <div class="totals__row">
+            <span>Total de produtos</span>
+            <b id="totalProdutos">0</b>
+          </div>
+          <div class="totals__row">
+            <span>Em estoque</span>
+            <b id="totalAtivos">0</b>
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+          <a class="btn btn--primary" href="./index.html">Abrir loja</a>
+          <a class="btn" href="./checkout.html">Checkout</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- CADASTRO / EDIÇÃO -->
+    <section id="secForm" class="hero" style="grid-template-columns: 1fr; padding-top:10px">
+      <div class="hero__text">
+        <h2 style="margin:0 0 12px 0">Cadastrar / Editar</h2>
+
+        <form id="produtoForm" class="form">
+          <input id="editId" type="hidden" />
+
+          <div class="form__row">
+            <label class="label">
+              Nome do produto
+              <input id="nome" required placeholder="Ex: Nike Air Zoom" />
+            </label>
+
+            <label class="label">
+              Marca
+              <input id="marca" required placeholder="Ex: Nike" />
+            </label>
+          </div>
+
+          <div class="form__row">
+            <label class="label">
+              Categoria
+              <select id="categoria" required>
+                <option value="">Selecione…</option>
+                <option value="corrida">Corrida</option>
+                <option value="casual">Casual</option>
+                <option value="basket">Basquete</option>
+                <option value="skate">Skate</option>
+              </select>
+            </label>
+
+            <label class="label">
+              Numeração (texto)
+              <input id="num" required placeholder="Ex: Num: 37 ao 43" />
+            </label>
+          </div>
+
+          <div class="form__row">
+            <label class="label">
+              Preço (R$)
+              <input id="preco" required inputmode="decimal" placeholder="Ex: 249,90" />
+            </label>
+
+            <label class="label">
+              Preço antigo (opcional)
+              <input id="precoAntigo" inputmode="decimal" placeholder="Ex: 329,90" />
+            </label>
+          </div>
+
+          <div class="form__row">
+            <label class="label">
+              Link do produto (Mercado Livre / outro)
+              <input id="link" required placeholder="Cole aqui o link do produto" />
+            </label>
+
+            <label class="label">
+              URL da imagem (opcional)
+              <input id="img" placeholder="https://... (se vazio, usa imagem padrão)" />
+            </label>
+          </div>
+
+          <div class="form__row">
+            <label class="label" style="grid-column:1/-1">
+              Descrição
+              <input id="desc" required placeholder="Ex: Tênis leve, confortável..." />
+            </label>
+          </div>
+
+          <div class="form__row">
+            <label class="label">
+              Disponível para venda?
+              <select id="ativo" required>
+                <option value="true">Sim</option>
+                <option value="false">Não</option>
+              </select>
+            </label>
+
+            <label class="label">
+              Tag extra (opcional)
+              <input id="tag" placeholder="Ex: Promo / Lançamento" />
+            </label>
+          </div>
+
+          <div class="form__row">
+            <button class="btn btn--primary" type="submit" id="btnSalvar">Salvar produto</button>
+            <button class="btn btn--ghost" type="button" id="btnLimpar">Limpar</button>
+            <button class="btn btn--danger" type="button" id="btnExcluir" style="display:none">Excluir</button>
+          </div>
+
+          <div class="muted" style="margin-top:10px">
+            Obs: os dados ficam salvos no seu dispositivo. Para usar em outro celular/PC, exporte e importe o JSON.
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- LISTA -->
+    <section id="secLista" style="display:none">
+      <div class="sectionTitleRow">
+        <h2>Produtos cadastrados</h2>
+        <div class="muted" id="listaInfo"></div>
+      </div>
+
+      <div class="search" style="margin-bottom:12px">
+        <input id="filtro" type="search" placeholder="Filtrar por nome, marca, categoria..." />
+        <button id="limparFiltro" class="btn btn--ghost" type="button">✕</button>
+      </div>
+
+      <section id="lista" class="grid" style="grid-template-columns:repeat(3,1fr)"></section>
+    </section>
+
+    <!-- MODAL JSON -->
+    <div id="jsonModal" class="drawer" aria-hidden="true">
+      <div class="drawer__backdrop" data-close></div>
+      <div class="drawer__panel" role="dialog" aria-modal="true" aria-label="JSON">
+        <div class="drawer__header">
+          <div>
+            <div class="drawer__title" id="jsonTitle">JSON</div>
+            <div class="muted" id="jsonSubtitle">Copie e guarde como backup</div>
+          </div>
+          <button class="btn btn--ghost" type="button" data-close>✕</button>
+        </div>
+
+        <div class="drawer__body">
+          <textarea id="jsonArea" style="
+            width:100%;height:55vh;resize:vertical;
+            border:1px solid rgba(255,255,255,.12);
+            background:rgba(255,255,255,.06);
+            color:var(--text);padding:12px;border-radius:12px;outline:none;
+          "></textarea>
+          <div class="muted" style="margin-top:10px">
+            Importação: cole o JSON e clique em <b>Aplicar</b>.
+          </div>
+        </div>
+
+        <div class="drawer__footer">
+          <div class="drawer__actions">
+            <button id="btnCopiarJson" class="btn btn--primary" type="button">Copiar</button>
+            <button id="btnAplicarJson" class="btn" type="button">Aplicar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <style>
+    .form{display:flex;flex-direction:column;gap:12px}
+    .form__row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .label{display:flex;flex-direction:column;gap:8px;font-weight:800}
+    .label input, .label select{
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      padding:12px 12px;border-radius:12px;
+      outline:none;
+    }
+    .label input::placeholder{color:rgba(233,236,242,.55)}
+    @media (max-width: 900px){
+      #secLista .grid{grid-template-columns:repeat(2,1fr) !important}
+    }
+    @media (max-width: 720px){
+      .form__row{grid-template-columns:1fr}
+      #secLista .grid{grid-template-columns:1fr !important}
+    }
+  </style>
+
+  <script>
+    (function(){
+      const LS_PRODUCTS = "magao_products_v1";
+
+      // -------- helpers ----------
+      const $ = (id) => document.getElementById(id);
+
+      function normalize(s){
+        return (s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+      }
+      function moneyToNumberBR(v){
+        const raw = (v||"").toString().trim();
+        if(!raw) return null;
+        const cleaned = raw.replace(/\./g,"").replace(",",".").replace(/[^\d.]/g,"");
+        const num = Number(cleaned);
+        return Number.isFinite(num) ? num : null;
+      }
+      function genId(){
+        return "mt-" + Math.random().toString(16).slice(2, 8) + "-" + Date.now().toString(16).slice(-4);
+      }
+      function defaultSvg(name){
+        const t = (name||"Produto").split(" ").slice(0,2).join(" ");
+        const svg = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600">
+            <defs>
+              <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#6ee7ff" stop-opacity="0.35"/>
+                <stop offset="1" stop-color="#9b87ff" stop-opacity="0.35"/>
+              </linearGradient>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#g)"/>
+            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+              font-family="Arial" font-size="44" fill="#e9ecf2" opacity="0.95">${escapeXml(t)}</text>
+          </svg>`;
+        return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.trim());
+      }
+      function escapeXml(unsafe){
+        return String(unsafe).replace(/[<>&'"]/g, c => ({
+          "<":"&lt;",">":"&gt;","&":"&amp;","'":"&apos;",'"':"&quot;"
+        }[c]));
+      }
+      function capCategory(cat){
+        const map = {corrida:"Corrida",casual:"Casual",basket:"Basquete",skate:"Skate"};
+        return map[cat]||cat;
+      }
+
+      function loadProducts(){
+        try{
+          const raw = localStorage.getItem(LS_PRODUCTS);
+          const arr = raw ? JSON.parse(raw) : null;
+          if(Array.isArray(arr) && arr.length) return arr;
+        }catch{}
+        // Padrão inicial (para não ficar vazio)
+        return [
+          { id:"mt-001", name:"Tênis Corrida AirFlow Pro", brand:"Magão", category:"corrida", price:249.9, oldPrice:329.9, sizeInfo:"Num: 37 ao 43", desc:"Leve, confortável e com boa absorção de impacto.", mlLink:"https://www.mercadolivre.com.br/", image:"", active:true, tag:"" },
+          { id:"mt-002", name:"Tênis Casual Street Lux", brand:"Urban", category:"casual", price:189.9, oldPrice:229.9, sizeInfo:"Num: 36 ao 42", desc:"Estilo para o dia a dia, combina com tudo.", mlLink:"https://www.mercadolivre.com.br/", image:"", active:true, tag:"" }
+        ];
+      }
+
+      function saveProducts(list){
+        localStorage.setItem(LS_PRODUCTS, JSON.stringify(list));
+      }
+
+      let products = loadProducts();
+      saveProducts(products); // garante persistência se estava vazio
+
+      // -------- UI refs ----------
+      const secForm = $("secForm");
+      const secLista = $("secLista");
+
+      const btnNovo = $("btnNovo");
+      const btnLista = $("btnLista");
+      const btnExport = $("btnExport");
+      const btnImport = $("btnImport");
+      const btnReset = $("btnReset");
+
+      const totalProdutos = $("totalProdutos");
+      const totalAtivos = $("totalAtivos");
+
+      const produtoForm = $("produtoForm");
+      const editId = $("editId");
+      const nome = $("nome");
+      const marca = $("marca");
+      const categoria = $("categoria");
+      const num = $("num");
+      const preco = $("preco");
+      const precoAntigo = $("precoAntigo");
+      const link = $("link");
+      const img = $("img");
+      const desc = $("desc");
+      const ativo = $("ativo");
+      const tag = $("tag");
+
+      const btnLimpar = $("btnLimpar");
+      const btnExcluir = $("btnExcluir");
+
+      const lista = $("lista");
+      const listaInfo = $("listaInfo");
+      const filtro = $("filtro");
+      const limparFiltro = $("limparFiltro");
+
+      const jsonModal = $("jsonModal");
+      const jsonTitle = $("jsonTitle");
+      const jsonSubtitle = $("jsonSubtitle");
+      const jsonArea = $("jsonArea");
+      const btnCopiarJson = $("btnCopiarJson");
+      const btnAplicarJson = $("btnAplicarJson");
+
+      // -------- views ----------
+      function setTab(tab){
+        // tabs (chips)
+        [btnNovo, btnLista].forEach(b => b.classList.remove("is-active"));
+        if(tab === "novo") btnNovo.classList.add("is-active");
+        if(tab === "lista") btnLista.classList.add("is-active");
+
+        secForm.style.display = tab === "novo" ? "" : "none";
+        secLista.style.display = tab === "lista" ? "" : "none";
+      }
+
+      btnNovo.addEventListener("click", ()=> setTab("novo"));
+      btnLista.addEventListener("click", ()=> { setTab("lista"); renderLista(); });
+
+      // -------- summary ----------
+      function renderResumo(){
+        totalProdutos.textContent = String(products.length);
+        totalAtivos.textContent = String(products.filter(p=>p.active).length);
+      }
+
+      // -------- form ----------
+      function clearForm(){
+        editId.value = "";
+        nome.value = "";
+        marca.value = "";
+        categoria.value = "";
+        num.value = "";
+        preco.value = "";
+        precoAntigo.value = "";
+        link.value = "";
+        img.value = "";
+        desc.value = "";
+        ativo.value = "true";
+        tag.value = "";
+        btnExcluir.style.display = "none";
+      }
+
+      function fillForm(p){
+        editId.value = p.id;
+        nome.value = p.name || "";
+        marca.value = p.brand || "";
+        categoria.value = p.category || "";
+        num.value = p.sizeInfo || "";
+        preco.value = (p.price ?? "").toString().replace(".", ",");
+        precoAntigo.value = (p.oldPrice ?? "").toString().replace(".", ",");
+        link.value = p.mlLink || "";
+        img.value = p.image || "";
+        desc.value = p.desc || "";
+        ativo.value = String(!!p.active);
+        tag.value = p.tag || "";
+        btnExcluir.style.display = "";
+      }
+
+      btnLimpar.addEventListener("click", clearForm);
+
+      btnExcluir.addEventListener("click", ()=>{
+        const id = editId.value;
+        if(!id) return;
+        const ok = confirm("Deseja excluir este produto?");
+        if(!ok) return;
+        products = products.filter(p=>p.id !== id);
+        saveProducts(products);
+        renderResumo();
+        clearForm();
+        renderLista();
+        alert("Produto excluído.");
+      });
+
+      produtoForm.addEventListener("submit", (e)=>{
+        e.preventDefault();
+
+        const pPrice = moneyToNumberBR(preco.value);
+        if(pPrice === null) { alert("Preço inválido."); return; }
+
+        const pOld = moneyToNumberBR(precoAntigo.value);
+        const isActive = ativo.value === "true";
+
+        const payload = {
+          id: editId.value || genId(),
+          name: nome.value.trim(),
+          brand: marca.value.trim(),
+          category: categoria.value,
+          sizeInfo: num.value.trim(),
+          price: pPrice,
+          oldPrice: pOld,
+          mlLink: link.value.trim(),
+          image: img.value.trim(),
+          desc: desc.value.trim(),
+          active: isActive,
+          tag: tag.value.trim()
+        };
+
+        if(!payload.name || !payload.brand || !payload.category || !payload.sizeInfo || !payload.mlLink || !payload.desc){
+          alert("Preencha todos os campos obrigatórios.");
+          return;
+        }
+
+        const idx = products.findIndex(x=>x.id === payload.id);
+        if(idx >= 0) products[idx] = payload;
+        else products.unshift(payload);
+
+        saveProducts(products);
+        renderResumo();
+        renderLista();
+
+        clearForm();
+        alert("Produto salvo!");
+      });
+
+      // -------- lista ----------
+      function renderLista(){
+        const q = normalize(filtro.value);
+        const list = products
+          .slice()
+          .sort((a,b)=> (b.active?1:0) - (a.active?1:0))
+          .filter(p=>{
+            if(!q) return true;
+            const hay = normalize(`${p.name} ${p.brand} ${p.category} ${p.desc}`);
+            return hay.includes(q);
+          });
+
+        listaInfo.textContent = `Mostrando ${list.length} produto(s)`;
+
+        lista.innerHTML = list.map(p=>{
+          const imgSrc = p.image && p.image.startsWith("http") ? p.image : (p.image || defaultSvg(p.name));
+          return `
+            <article class="card">
+              <div class="card__img">
+                <img src="${imgSrc}" alt="${escapeAttr(p.name)}">
+              </div>
+              <div class="card__body">
+                <div class="card__title">${escapeHtml(p.name)}</div>
+                <div class="card__meta">
+                  <span class="pill">${escapeHtml(p.brand)}</span>
+                  <span class="pill">${escapeHtml(capCategory(p.category))}</span>
+                  <span class="pill">${escapeHtml(p.sizeInfo)}</span>
+                  ${p.tag ? `<span class="pill">${escapeHtml(p.tag)}</span>` : ""}
+                  ${p.active ? `<span class="pill" style="border-color:rgba(110,231,255,.35)">Ativo</span>` : `<span class="pill" style="border-color:rgba(255,107,107,.35)">Inativo</span>`}
+                </div>
+                <div class="priceRow">
+                  <div>
+                    <div class="price">${moneyBRL(p.price)}</div>
+                    ${p.oldPrice ? `<div class="old">${moneyBRL(p.oldPrice)}</div>` : `<div class="old">—</div>`}
+                  </div>
+                </div>
+                <div class="card__actions">
+                  <button class="btn btn--primary" type="button" data-edit="${p.id}">Editar</button>
+                  <a class="btn" href="${p.mlLink}" target="_blank" rel="noopener">Abrir link</a>
+                </div>
+              </div>
+            </article>
+          `;
+        }).join("");
+
+        if(!list.length){
+          lista.innerHTML = `<div class="muted" style="padding:10px">Nenhum produto encontrado.</div>`;
+        }
+      }
+
+      function moneyBRL(v){ return Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
+
+      function escapeHtml(str){
+        return String(str).replace(/[&<>"']/g, (m)=>({
+          "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+        }[m]));
+      }
+      function escapeAttr(str){
+        return String(str).replace(/"/g,'&quot;');
+      }
+
+      lista.addEventListener("click", (e)=>{
+        const btn = e.target.closest("[data-edit]");
+        if(!btn) return;
+        const id = btn.getAttribute("data-edit");
+        const p = products.find(x=>x.id === id);
+        if(!p) return;
+        setTab("novo");
+        fillForm(p);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+
+      filtro.addEventListener("input", renderLista);
+      limparFiltro.addEventListener("click", ()=>{ filtro.value=""; renderLista(); filtro.focus(); });
+
+      // -------- modal JSON ----------
+      function openJsonModal(){
+        jsonModal.classList.add("is-open");
+        jsonModal.setAttribute("aria-hidden","false");
+        document.body.style.overflow="hidden";
+      }
+      function closeJsonModal(){
+        jsonModal.classList.remove("is-open");
+        jsonModal.setAttribute("aria-hidden","true");
+        document.body.style.overflow="";
+      }
+      jsonModal.addEventListener("click",(e)=>{
+        if(e.target.matches("[data-close]") || e.target.closest("[data-close]")) closeJsonModal();
+      });
+      document.addEventListener("keydown",(e)=>{ if(e.key==="Escape") closeJsonModal(); });
+
+      btnExport.addEventListener("click", ()=>{
+        jsonTitle.textContent = "Exportar produtos (JSON)";
+        jsonSubtitle.textContent = "Copie e guarde como backup";
+        jsonArea.value = JSON.stringify(products, null, 2);
+        openJsonModal();
+      });
+
+      btnImport.addEventListener("click", ()=>{
+        jsonTitle.textContent = "Importar produtos (JSON)";
+        jsonSubtitle.textContent = "Cole o JSON e clique em Aplicar";
+        jsonArea.value = "";
+        openJsonModal();
+      });
+
+      btnCopiarJson.addEventListener("click", async ()=>{
+        try{
+          await navigator.clipboard.writeText(jsonArea.value);
+          alert("JSON copiado!");
+        }catch{
+          alert("Não consegui copiar automaticamente. Selecione e copie manualmente.");
+        }
+      });
+
+      btnAplicarJson.addEventListener("click", ()=>{
+        try{
+          const parsed = JSON.parse(jsonArea.value || "[]");
+          if(!Array.isArray(parsed)) throw new Error("Formato inválido");
+          // valida mínimo
+          for(const p of parsed){
+            if(!p.id || !p.name || !p.brand || !p.category) throw new Error("JSON incompleto");
+          }
+          products = parsed.map(p=>({
+            ...p,
+            active: !!p.active
+          }));
+          saveProducts(products);
+          renderResumo();
+          renderLista();
+          closeJsonModal();
+          alert("Importado com sucesso!");
+        }catch(err){
+          alert("JSON inválido. Verifique e tente novamente.");
+        }
+      });
+
+      btnReset.addEventListener("click", ()=>{
+        const ok = confirm("Restaurar produtos padrão? Isso vai substituir sua lista atual.");
+        if(!ok) return;
+        localStorage.removeItem(LS_PRODUCTS);
+        products = loadProducts();
+        saveProducts(products);
+        renderResumo();
+        renderLista();
+        clearForm();
+        alert("Restaurado para o padrão.");
+      });
+
+      // init
+      renderResumo();
+      clearForm();
+      setTab("novo");
+    })();
+  </script>
+</body>
+</html>
