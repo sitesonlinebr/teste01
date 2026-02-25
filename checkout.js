@@ -1,15 +1,25 @@
 (function () {
   const WHATSAPP_NUMBER = "5538998347326"; // 55 + DDD + número
-  const LS_CART = "magao_cart_v1";
-  const LS_PRODUCTS = "magao_products_v1";
+  const LS_CART = "magao_cart_v2";
+  const LS_PRODUCTS = "magao_products_v2";
 
-  function escapeXml(unsafe) {
-    return String(unsafe).replace(/[<>&'"]/g, c => ({
-      "<": "&lt;", ">": "&gt;", "&": "&amp;", "'": "&apos;", '"': "&quot;"
-    }[c]));
+  function moneyBRL(value) {
+    return (Number(value) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   }
 
-  function svgDataUri(text) {
+  function capCategory(cat) {
+    const map = { corrida: "Corrida", casual: "Casual", basket: "Basquete", skate: "Skate" };
+    return map[cat] || cat;
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, (m) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+    }[m]));
+  }
+
+  function defaultSvg(name) {
+    const text = (name || "Produto").split(" ").slice(0, 2).join(" ");
     const svg = `
       <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600">
         <defs>
@@ -20,28 +30,9 @@
         </defs>
         <rect width="100%" height="100%" fill="url(#g)"/>
         <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
-          font-family="Arial" font-size="44" fill="#e9ecf2" opacity="0.95">${escapeXml(text)}</text>
+          font-family="Arial" font-size="44" fill="#e9ecf2" opacity="0.95">${escapeHtml(text)}</text>
       </svg>`;
     return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.trim());
-  }
-
-  function defaultProducts() {
-    return [
-      {
-        id: "mt-001",
-        name: "Tênis Corrida AirFlow Pro",
-        brand: "Magão",
-        category: "corrida",
-        price: 249.9,
-        oldPrice: 329.9,
-        sizeInfo: "Num: 37 ao 43",
-        desc: "Leve, confortável e com boa absorção de impacto.",
-        mlLink: "https://www.mercadolivre.com.br/",
-        image: "",
-        active: true,
-        tag: ""
-      }
-    ];
   }
 
   function loadProducts() {
@@ -50,15 +41,18 @@
       const arr = raw ? JSON.parse(raw) : null;
       if (Array.isArray(arr) && arr.length) return arr;
     } catch {}
-    const defs = defaultProducts();
-    localStorage.setItem(LS_PRODUCTS, JSON.stringify(defs));
-    return defs;
+    return [];
   }
 
-  let PRODUCTS = loadProducts().map(p => {
-    const img = (p.image && p.image.startsWith("http")) ? p.image : (p.image || svgDataUri((p.name || "Produto").split(" ").slice(0,2).join(" ")));
-    return { ...p, image: img, active: !!p.active };
-  });
+  function hydrateProducts(list) {
+    return list.map(p => ({
+      ...p,
+      active: !!p.active,
+      sizes: Array.isArray(p.sizes) ? p.sizes : [],
+      colors: Array.isArray(p.colors) ? p.colors : [],
+      image: p.image || defaultSvg(p.name)
+    }));
+  }
 
   function readCart() {
     try {
@@ -74,13 +68,19 @@
     localStorage.setItem(LS_CART, JSON.stringify(cart));
   }
 
-  function setQty(productId, qty) {
+  function cartKey(item) {
+    return `${item.productId}__${item.size || ""}__${item.color || ""}`;
+  }
+
+  function setQtyByKey(key, qty) {
     const cart = readCart();
-    const idx = cart.findIndex(i => i.productId === productId);
+    const idx = cart.findIndex(i => cartKey(i) === key);
     if (idx === -1) return;
+
     const nextQty = Math.max(0, Number(qty) || 0);
     if (nextQty === 0) cart.splice(idx, 1);
     else cart[idx].qty = nextQty;
+
     writeCart(cart);
     renderAll();
   }
@@ -90,11 +90,7 @@
     renderAll();
   }
 
-  function moneyBRL(value) {
-    return (Number(value) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-  }
-
-  function totals() {
+  function totals(PRODUCTS) {
     const cart = readCart();
     let count = 0, subtotal = 0;
     for (const it of cart) {
@@ -106,17 +102,7 @@
     return { count, subtotal };
   }
 
-  function capCategory(cat) {
-    const map = { corrida: "Corrida", casual: "Casual", basket: "Basquete", skate: "Skate" };
-    return map[cat] || cat;
-  }
-
-  function escapeHtml(str) {
-    return String(str).replace(/[&<>"']/g, (m) => ({
-      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
-    }[m]));
-  }
-
+  // UI refs
   const ckItemsCount = document.getElementById("ckItemsCount");
   const ckSubtotal = document.getElementById("ckSubtotal");
   const ckCartList = document.getElementById("ckCartList");
@@ -128,11 +114,7 @@
   const outroWrap = document.getElementById("outroWrap");
 
   function renderCartList() {
-    PRODUCTS = loadProducts().map(p => {
-      const img = (p.image && p.image.startsWith("http")) ? p.image : (p.image || svgDataUri((p.name || "Produto").split(" ").slice(0,2).join(" ")));
-      return { ...p, image: img, active: !!p.active };
-    });
-
+    const PRODUCTS = hydrateProducts(loadProducts());
     const cart = readCart();
 
     // remove itens inexistentes
@@ -145,12 +127,13 @@
       ckCartList.innerHTML = "";
       return;
     }
-
     ckEmptyHint.textContent = "";
 
     ckCartList.innerHTML = cleaned.map(it => {
       const p = PRODUCTS.find(x => x.id === it.productId);
       if (!p) return "";
+      const key = cartKey(it);
+
       return `
         <div class="cartItem">
           <div class="cartItem__thumb">
@@ -159,29 +142,28 @@
 
           <div>
             <div class="cartItem__title">${escapeHtml(p.name)}</div>
-            <div class="cartItem__muted">${escapeHtml(p.brand)} • ${escapeHtml(capCategory(p.category))} • ${escapeHtml(p.sizeInfo)}</div>
+            <div class="cartItem__muted">${escapeHtml(p.brand)} • ${escapeHtml(capCategory(p.category))}</div>
+            <div class="cartItem__muted">Tamanho: <b>${escapeHtml(it.size || "-")}</b>${it.color ? ` • Cor: <b>${escapeHtml(it.color)}</b>` : ""}</div>
             <div class="cartItem__muted">${moneyBRL(p.price)} cada</div>
-            <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
-              <a class="btn" href="${p.mlLink}" target="_blank" rel="noopener" style="padding:8px 10px;border-radius:12px">Abrir link (ML)</a>
-              ${p.active ? "" : `<span class="pill" style="border-color:rgba(255,107,107,.35)">Inativo</span>`}
-            </div>
           </div>
 
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
             <div class="qty">
-              <button type="button" data-dec="${p.id}">−</button>
+              <button type="button" data-dec="${key}">−</button>
               <span>${it.qty}</span>
-              <button type="button" data-inc="${p.id}">+</button>
+              <button type="button" data-inc="${key}">+</button>
             </div>
             <div style="font-weight:900">${moneyBRL((Number(p.price)||0) * it.qty)}</div>
-            <button class="btn btn--ghost" type="button" data-del="${p.id}" style="padding:8px 10px">Remover</button>
+            <button class="btn btn--ghost" type="button" data-del="${key}" style="padding:8px 10px">Remover</button>
           </div>
-        </div>`;
+        </div>
+      `;
     }).join("");
   }
 
   function renderSummary() {
-    const t = totals();
+    const PRODUCTS = hydrateProducts(loadProducts());
+    const t = totals(PRODUCTS);
     ckItemsCount.textContent = String(t.count);
     ckSubtotal.textContent = moneyBRL(t.subtotal);
   }
@@ -196,23 +178,16 @@
     const dec = e.target.closest("[data-dec]");
     const del = e.target.closest("[data-del]");
 
-    if (inc) {
-      const id = inc.getAttribute("data-inc");
-      const cart = readCart();
-      const item = cart.find(i => i.productId === id);
-      setQty(id, (item?.qty || 0) + 1);
-    }
-    if (dec) {
-      const id = dec.getAttribute("data-dec");
-      const cart = readCart();
-      const item = cart.find(i => i.productId === id);
-      setQty(id, (item?.qty || 0) - 1);
-    }
-    if (del) {
-      const id = del.getAttribute("data-del");
-      setQty(id, 0);
-    }
+    if (inc) setQtyByKey(inc.getAttribute("data-inc"), getQtyByKey(inc.getAttribute("data-inc")) + 1);
+    if (dec) setQtyByKey(dec.getAttribute("data-dec"), getQtyByKey(dec.getAttribute("data-dec")) - 1);
+    if (del) setQtyByKey(del.getAttribute("data-del"), 0);
   });
+
+  function getQtyByKey(key){
+    const cart = readCart();
+    const item = cart.find(i => cartKey(i) === key);
+    return item ? item.qty : 0;
+  }
 
   ckClearCart.addEventListener("click", clearCart);
 
@@ -223,8 +198,10 @@
   });
 
   function buildWhatsAppMessage(formData) {
+    const PRODUCTS = hydrateProducts(loadProducts());
     const cart = readCart();
-    const t = totals();
+    const t = totals(PRODUCTS);
+
     const now = new Date();
     const dataHora = now.toLocaleString("pt-BR");
 
@@ -237,9 +214,9 @@
     cart.forEach(it => {
       const p = PRODUCTS.find(x => x.id === it.productId);
       if (!p) return;
+      const opt = `Tamanho: ${it.size || "-"}${it.color ? ` | Cor: ${it.color}` : ""}`;
       lines.push(`• ${p.name} — ${it.qty}x — ${moneyBRL((Number(p.price)||0) * it.qty)}`);
-      lines.push(`  (${p.brand} | ${capCategory(p.category)} | ${p.sizeInfo})`);
-      lines.push(`  Link: ${p.mlLink}`);
+      lines.push(`  (${p.brand} | ${capCategory(p.category)} | ${opt})`);
     });
 
     lines.push("");
@@ -249,7 +226,6 @@
 
     lines.push(`👤 *Nome:* ${formData.nome}`);
     lines.push(`📍 *Endereço:* ${formData.endereco}`);
-
     if (formData.obs) lines.push(`📝 *Obs:* ${formData.obs}`);
 
     let pagamentoTxt = formData.pagamento;
