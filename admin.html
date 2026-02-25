@@ -9,564 +9,256 @@
 <body>
   <header class="topbar">
     <div class="container topbar__row">
-      <a class="brand" href="./index.html" aria-label="Voltar ao site">
+      <a class="brand" href="./index.html">
         <span class="brand__logo">MT</span>
-        <span class="brand__name">Admin</span>
+        <span class="brand__name">ADMIN</span>
       </a>
 
-      <a class="btn btn--ghost" href="./index.html">← Ver catálogo</a>
-    </div>
+      <div style="flex:1"></div>
 
-    <nav class="container chips" aria-label="Ações">
-      <button id="btnNovo" class="chip is-active" type="button">Cadastrar produto</button>
-      <button id="btnLista" class="chip" type="button">Lista</button>
-      <button id="btnExport" class="chip" type="button">Exportar</button>
-      <button id="btnImport" class="chip" type="button">Importar</button>
-      <button id="btnReset" class="chip" type="button">Restaurar padrão</button>
-    </nav>
+      <a class="iconBtn" href="./index.html">Voltar</a>
+      <a class="iconBtn" href="./checkout.html">Checkout</a>
+    </div>
   </header>
 
-  <main class="container" style="padding:18px 0 26px">
-    <section class="hero" style="grid-template-columns: 1.15fr .85fr;">
-      <div class="hero__text">
-        <h1>Produtos (sem links externos)</h1>
-        <p>
-          Cadastre, edite e deixe disponível para venda. A foto é enviada pelo botão e fica salva no navegador.
-        </p>
-        <p class="muted" style="margin:0">
-          Dica: use <b>Exportar</b> para guardar backup e <b>Importar</b> para restaurar em outro aparelho.
-        </p>
-      </div>
-
-      <div class="hero__card">
-        <div class="hero__cardTitle">Resumo</div>
-        <div class="totals">
-          <div class="totals__row">
-            <span>Total</span>
-            <b id="totalProdutos">0</b>
-          </div>
-          <div class="totals__row">
-            <span>Ativos</span>
-            <b id="totalAtivos">0</b>
-          </div>
-        </div>
-        <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
-          <a class="btn btn--primary" href="./index.html">Abrir loja</a>
-          <a class="btn" href="./checkout.html">Checkout</a>
-        </div>
-      </div>
+  <main class="container" style="padding:14px 0 26px">
+    <section class="sectionTitleRow">
+      <h2>Cadastro de produtos</h2>
+      <div class="muted" id="status">—</div>
     </section>
 
-    <!-- CADASTRO / EDIÇÃO -->
-    <section id="secForm" class="hero" style="grid-template-columns: 1fr; padding-top:10px">
-      <div class="hero__text">
-        <h2 style="margin:0 0 12px 0">Cadastrar / Editar</h2>
+    <section class="card" style="padding:14px">
+      <form id="form" style="display:flex;flex-direction:column;gap:12px">
+        <input id="id" type="hidden" />
+        <input id="imageData" type="hidden" />
 
-        <form id="produtoForm" class="form">
-          <input id="editId" type="hidden" />
-          <input id="imageData" type="hidden" />
+        <div class="opts">
+          <div class="optBox">
+            <b>Nome</b>
+            <input id="name" required placeholder="Ex: Tênis Nike Revolution 8" style="border:0;outline:0;background:transparent;font-weight:900">
+          </div>
+          <div class="optBox">
+            <b>Marca</b>
+            <input id="brand" required placeholder="Ex: Nike" style="border:0;outline:0;background:transparent;font-weight:900">
+          </div>
+        </div>
 
-          <div class="form__row">
-            <label class="label">
-              Nome do produto
-              <input id="nome" required placeholder="Ex: Nike Air Max" />
-            </label>
-
-            <label class="label">
-              Marca
-              <input id="marca" required placeholder="Ex: Nike" />
-            </label>
+        <div class="opts">
+          <div class="optBox">
+            <b>Categoria</b>
+            <select id="category" required style="border:0;outline:0;background:transparent;font-weight:900">
+              <option value="">Selecione…</option>
+              <option value="corrida">Corrida</option>
+              <option value="casual">Casual</option>
+              <option value="basket">Basquete</option>
+              <option value="skate">Skate</option>
+            </select>
           </div>
 
-          <div class="form__row">
-            <label class="label">
-              Categoria
-              <select id="categoria" required>
-                <option value="">Selecione…</option>
-                <option value="corrida">Corrida</option>
-                <option value="casual">Casual</option>
-                <option value="basket">Basquete</option>
-                <option value="skate">Skate</option>
-              </select>
-            </label>
+          <div class="optBox">
+            <b>Ativo para venda?</b>
+            <select id="active" required style="border:0;outline:0;background:transparent;font-weight:900">
+              <option value="true">Sim</option>
+              <option value="false">Não</option>
+            </select>
+          </div>
+        </div>
 
-            <label class="label">
-              Disponível para venda?
-              <select id="ativo" required>
-                <option value="true">Sim</option>
-                <option value="false">Não</option>
-              </select>
-            </label>
+        <div class="opts">
+          <div class="optBox">
+            <b>Preço (Pix)</b>
+            <input id="price" required inputmode="decimal" placeholder="Ex: 341,99" style="border:0;outline:0;background:transparent;font-weight:900">
+          </div>
+          <div class="optBox">
+            <b>Preço antigo (opcional)</b>
+            <input id="oldPrice" inputmode="decimal" placeholder="Ex: 399,99" style="border:0;outline:0;background:transparent;font-weight:900">
+          </div>
+        </div>
+
+        <div class="opts">
+          <div class="optBox">
+            <b>Desconto % (opcional)</b>
+            <input id="discountPercent" inputmode="numeric" placeholder="Ex: 15" style="border:0;outline:0;background:transparent;font-weight:900">
+          </div>
+          <div class="optBox">
+            <b>Parcelas (opcional)</b>
+            <input id="installments" inputmode="numeric" placeholder="Ex: 5" style="border:0;outline:0;background:transparent;font-weight:900">
+          </div>
+        </div>
+
+        <div class="opts">
+          <div class="optBox">
+            <b>Tamanhos (separe por vírgula)</b>
+            <input id="sizes" required placeholder="37,38,39,40" style="border:0;outline:0;background:transparent;font-weight:900">
+          </div>
+          <div class="optBox">
+            <b>Cores (opcional, vírgula)</b>
+            <input id="colors" placeholder="Preto, Branco" style="border:0;outline:0;background:transparent;font-weight:900">
+          </div>
+        </div>
+
+        <div class="optBox">
+          <b>Descrição</b>
+          <input id="desc" required placeholder="Ex: Conforto para corridas..." style="border:0;outline:0;background:transparent;font-weight:900">
+        </div>
+
+        <div class="optBox">
+          <b>Foto do produto (upload)</b>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <input id="file" type="file" accept="image/*">
+            <button id="removePhoto" class="btn btn--ghost" type="button">Remover foto</button>
           </div>
 
-          <div class="form__row">
-            <label class="label">
-              Preço (R$)
-              <input id="preco" required inputmode="decimal" placeholder="Ex: 249,90" />
-            </label>
-
-            <label class="label">
-              Preço antigo (opcional)
-              <input id="precoAntigo" inputmode="decimal" placeholder="Ex: 329,90" />
-            </label>
+          <div style="margin-top:10px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff">
+            <img id="preview" alt="Prévia" style="width:100%;height:220px;object-fit:cover">
           </div>
+          <div class="muted" style="margin-top:8px">Dica técnica: use imagem leve (até ~900KB) pra não travar.</div>
+        </div>
 
-          <div class="form__row">
-            <label class="label">
-              Tamanhos (separe por vírgula)
-              <input id="tamanhos" required placeholder="Ex: 37,38,39,40,41,42" />
-            </label>
-
-            <label class="label">
-              Cores (opcional, separe por vírgula)
-              <input id="cores" placeholder="Ex: Preto, Branco, Azul" />
-            </label>
-          </div>
-
-          <div class="form__row">
-            <label class="label" style="grid-column:1/-1">
-              Descrição
-              <input id="desc" required placeholder="Ex: Confortável, leve, solado macio..." />
-            </label>
-          </div>
-
-          <div class="form__row">
-            <div class="label" style="grid-column:1/-1">
-              Foto do produto
-              <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-                <input id="file" type="file" accept="image/*" />
-                <button id="btnRemoverFoto" class="btn btn--ghost" type="button">Remover foto</button>
-              </div>
-              <div class="muted" style="margin-top:6px">A imagem é salva no navegador (recomendado foto leve).</div>
-
-              <div style="
-                margin-top:10px;
-                border:1px solid rgba(255,255,255,.08);
-                background:rgba(255,255,255,.03);
-                border-radius:16px;
-                overflow:hidden;
-                width:min(520px,100%);
-              ">
-                <img id="preview" alt="Prévia" style="display:block;width:100%;height:240px;object-fit:cover" />
-              </div>
-            </div>
-          </div>
-
-          <div class="form__row">
-            <button class="btn btn--primary" type="submit" id="btnSalvar">Salvar produto</button>
-            <button class="btn btn--ghost" type="button" id="btnLimpar">Limpar</button>
-            <button class="btn btn--danger" type="button" id="btnExcluir" style="display:none">Excluir</button>
-          </div>
-
-          <div class="muted" style="margin-top:10px">
-            Importante: por ser salvo localmente, se você limpar dados do navegador, perde os produtos (use exportar).
-          </div>
-        </form>
-      </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn--primary" type="submit">Salvar</button>
+          <button id="clear" class="btn" type="button">Novo</button>
+          <button id="delete" class="btn btn--danger" type="button" style="display:none">Excluir</button>
+        </div>
+      </form>
     </section>
 
-    <!-- LISTA -->
-    <section id="secLista" style="display:none">
-      <div class="sectionTitleRow">
-        <h2>Produtos cadastrados</h2>
-        <div class="muted" id="listaInfo"></div>
-      </div>
-
-      <div class="search" style="margin-bottom:12px">
-        <input id="filtro" type="search" placeholder="Filtrar por nome, marca, categoria..." />
-        <button id="limparFiltro" class="btn btn--ghost" type="button">✕</button>
-      </div>
-
-      <section id="lista" class="grid" style="grid-template-columns:repeat(3,1fr)"></section>
+    <section class="sectionTitleRow">
+      <h2>Lista</h2>
+      <div class="muted" id="count">0</div>
     </section>
 
-    <!-- MODAL JSON -->
-    <div id="jsonModal" class="drawer" aria-hidden="true">
-      <div class="drawer__backdrop" data-close></div>
-      <div class="drawer__panel" role="dialog" aria-modal="true" aria-label="JSON">
-        <div class="drawer__header">
-          <div>
-            <div class="drawer__title" id="jsonTitle">JSON</div>
-            <div class="muted" id="jsonSubtitle">Backup</div>
-          </div>
-          <button class="btn btn--ghost" type="button" data-close>✕</button>
-        </div>
-
-        <div class="drawer__body">
-          <textarea id="jsonArea" style="
-            width:100%;height:55vh;resize:vertical;
-            border:1px solid rgba(255,255,255,.12);
-            background:rgba(255,255,255,.06);
-            color:var(--text);padding:12px;border-radius:12px;outline:none;
-          "></textarea>
-        </div>
-
-        <div class="drawer__footer">
-          <div class="drawer__actions">
-            <button id="btnCopiarJson" class="btn btn--primary" type="button">Copiar</button>
-            <button id="btnAplicarJson" class="btn" type="button">Aplicar</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <section id="list" class="grid"></section>
   </main>
-
-  <style>
-    .form{display:flex;flex-direction:column;gap:12px}
-    .form__row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .label{display:flex;flex-direction:column;gap:8px;font-weight:800}
-    .label input, .label select{
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(255,255,255,.06);
-      color:var(--text);
-      padding:12px 12px;border-radius:12px;
-      outline:none;
-    }
-    .label input::placeholder{color:rgba(233,236,242,.55)}
-    @media (max-width: 900px){
-      #secLista .grid{grid-template-columns:repeat(2,1fr) !important}
-    }
-    @media (max-width: 720px){
-      .form__row{grid-template-columns:1fr}
-      #secLista .grid{grid-template-columns:1fr !important}
-    }
-  </style>
 
   <script>
     (function(){
-      const LS_PRODUCTS = "magao_products_v2"; // versão nova
+      const LS_PRODUCTS = "magao_products";
+      const LEGACY_PRODUCTS = ["magao_products_v2","magao_products_v1","magao_products_v1"];
 
-      const $ = (id) => document.getElementById(id);
+      const $ = (id)=>document.getElementById(id);
 
-      function normalize(s){
-        return (s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+      function readJSON(k){ try{return JSON.parse(localStorage.getItem(k)||"null")}catch{return null} }
+      function writeJSON(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
+
+      function migrateProducts(){
+        if(localStorage.getItem(LS_PRODUCTS)) return;
+        for(const k of LEGACY_PRODUCTS){
+          const v = readJSON(k);
+          if(Array.isArray(v) && v.length){ writeJSON(LS_PRODUCTS, v); break; }
+        }
       }
 
       function moneyToNumberBR(v){
-        const raw = (v||"").toString().trim();
+        const raw=(v||"").toString().trim();
         if(!raw) return null;
-        const cleaned = raw.replace(/\./g,"").replace(",",".").replace(/[^\d.]/g,"");
-        const num = Number(cleaned);
-        return Number.isFinite(num) ? num : null;
+        const cleaned=raw.replace(/\./g,"").replace(",",".").replace(/[^\d.]/g,"");
+        const num=Number(cleaned);
+        return Number.isFinite(num)?num:null;
       }
-
       function genId(){
-        return "mt-" + Math.random().toString(16).slice(2, 8) + "-" + Date.now().toString(16).slice(-4);
+        return "mt-" + Math.random().toString(16).slice(2,8) + "-" + Date.now().toString(16).slice(-4);
       }
-
+      function parseComma(v){
+        return (v||"").split(",").map(s=>s.trim()).filter(Boolean);
+      }
       function escapeHtml(str){
-        return String(str).replace(/[&<>"']/g, (m)=>({
-          "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-        }[m]));
+        return String(str).replace(/[&<>"']/g,(m)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
       }
-      function escapeAttr(str){ return String(str).replace(/"/g,'&quot;'); }
-
-      function capCategory(cat){
-        const map = {corrida:"Corrida",casual:"Casual",basket:"Basquete",skate:"Skate"};
-        return map[cat]||cat;
-      }
-
       function defaultSvg(name){
-        const t = (name||"Produto").split(" ").slice(0,2).join(" ");
-        const svg = `
-          <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600">
-            <defs>
-              <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#6ee7ff" stop-opacity="0.35"/>
-                <stop offset="1" stop-color="#9b87ff" stop-opacity="0.35"/>
-              </linearGradient>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#g)"/>
-            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
-              font-family="Arial" font-size="44" fill="#e9ecf2" opacity="0.95">${escapeHtml(t)}</text>
-          </svg>`;
+        const text=(name||"Produto").split(" ").slice(0,2).join(" ");
+        const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600">
+          <rect width="100%" height="100%" fill="#ffffff"/>
+          <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+            font-family="Arial" font-size="44" fill="#111827" opacity="0.7">${escapeHtml(text)}</text>
+        </svg>`;
         return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.trim());
       }
 
       function loadProducts(){
-        try{
-          const raw = localStorage.getItem(LS_PRODUCTS);
-          const arr = raw ? JSON.parse(raw) : null;
-          if(Array.isArray(arr) && arr.length) return arr;
-        }catch{}
-        return [
-          {
-            id:"mt-001",
-            name:"Tênis Corrida AirFlow Pro",
-            brand:"Magão",
-            category:"corrida",
-            price:249.9,
-            oldPrice:329.9,
-            sizes:["37","38","39","40","41","42","43"],
-            colors:["Preto","Branco"],
-            desc:"Leve, confortável e com boa absorção de impacto.",
-            image:"",
-            active:true
-          },
-          {
-            id:"mt-002",
-            name:"Tênis Casual Street Lux",
-            brand:"Urban",
-            category:"casual",
-            price:189.9,
-            oldPrice:null,
-            sizes:["36","37","38","39","40","41","42"],
-            colors:["Branco"],
-            desc:"Estilo para o dia a dia, combina com tudo.",
-            image:"",
-            active:true
-          }
-        ];
+        const arr=readJSON(LS_PRODUCTS);
+        return Array.isArray(arr)?arr:[];
       }
       function saveProducts(list){
-        localStorage.setItem(LS_PRODUCTS, JSON.stringify(list));
+        writeJSON(LS_PRODUCTS, list);
       }
-
-      let products = loadProducts();
-      saveProducts(products);
 
       // refs
-      const secForm = $("secForm");
-      const secLista = $("secLista");
+      const status=$("status"), count=$("count"), listEl=$("list");
 
-      const btnNovo = $("btnNovo");
-      const btnLista = $("btnLista");
-      const btnExport = $("btnExport");
-      const btnImport = $("btnImport");
-      const btnReset = $("btnReset");
+      const form=$("form");
+      const id=$("id");
+      const imageData=$("imageData");
+      const name=$("name"), brand=$("brand"), category=$("category"), active=$("active");
+      const price=$("price"), oldPrice=$("oldPrice"), discountPercent=$("discountPercent"), installments=$("installments");
+      const sizes=$("sizes"), colors=$("colors"), desc=$("desc");
+      const file=$("file"), preview=$("preview");
+      const removePhoto=$("removePhoto"), clearBtn=$("clear"), deleteBtn=$("delete");
 
-      const totalProdutos = $("totalProdutos");
-      const totalAtivos = $("totalAtivos");
-
-      const produtoForm = $("produtoForm");
-      const editId = $("editId");
-
-      const nome = $("nome");
-      const marca = $("marca");
-      const categoria = $("categoria");
-      const ativo = $("ativo");
-      const preco = $("preco");
-      const precoAntigo = $("precoAntigo");
-      const tamanhos = $("tamanhos");
-      const cores = $("cores");
-      const desc = $("desc");
-
-      const file = $("file");
-      const imageData = $("imageData");
-      const preview = $("preview");
-      const btnRemoverFoto = $("btnRemoverFoto");
-
-      const btnLimpar = $("btnLimpar");
-      const btnExcluir = $("btnExcluir");
-
-      const lista = $("lista");
-      const listaInfo = $("listaInfo");
-      const filtro = $("filtro");
-      const limparFiltro = $("limparFiltro");
-
-      const jsonModal = $("jsonModal");
-      const jsonTitle = $("jsonTitle");
-      const jsonSubtitle = $("jsonSubtitle");
-      const jsonArea = $("jsonArea");
-      const btnCopiarJson = $("btnCopiarJson");
-      const btnAplicarJson = $("btnAplicarJson");
-
-      function moneyBRL(v){
-        return (Number(v)||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-      }
-
-      function setTab(tab){
-        [btnNovo, btnLista].forEach(b => b.classList.remove("is-active"));
-        if(tab === "novo") btnNovo.classList.add("is-active");
-        if(tab === "lista") btnLista.classList.add("is-active");
-        secForm.style.display = tab === "novo" ? "" : "none";
-        secLista.style.display = tab === "lista" ? "" : "none";
-      }
-
-      btnNovo.addEventListener("click", ()=> setTab("novo"));
-      btnLista.addEventListener("click", ()=> { setTab("lista"); renderLista(); });
-
-      function renderResumo(){
-        totalProdutos.textContent = String(products.length);
-        totalAtivos.textContent = String(products.filter(p=>p.active).length);
+      function setStatus(){
+        const products=loadProducts();
+        status.textContent = `Salvos: ${products.length}`;
       }
 
       function clearForm(){
-        editId.value = "";
-        nome.value = "";
-        marca.value = "";
-        categoria.value = "";
-        ativo.value = "true";
-        preco.value = "";
-        precoAntigo.value = "";
-        tamanhos.value = "";
-        cores.value = "";
-        desc.value = "";
-        imageData.value = "";
-        file.value = "";
-        preview.src = defaultSvg("Sem foto");
-        btnExcluir.style.display = "none";
+        id.value="";
+        imageData.value="";
+        name.value="";brand.value="";category.value="";active.value="true";
+        price.value="";oldPrice.value="";discountPercent.value="";installments.value="";
+        sizes.value="";colors.value="";desc.value="";
+        file.value="";
+        preview.src=defaultSvg("Sem foto");
+        deleteBtn.style.display="none";
       }
 
-      function fillForm(p){
-        editId.value = p.id;
-        nome.value = p.name || "";
-        marca.value = p.brand || "";
-        categoria.value = p.category || "";
-        ativo.value = String(!!p.active);
-        preco.value = (p.price ?? "").toString().replace(".", ",");
-        precoAntigo.value = (p.oldPrice ?? "").toString().replace(".", ",");
-        tamanhos.value = (p.sizes || []).join(",");
-        cores.value = (p.colors || []).join(",");
-        desc.value = p.desc || "";
-        imageData.value = p.image || "";
-        preview.src = p.image || defaultSvg(p.name);
-        btnExcluir.style.display = "";
-      }
-
-      btnLimpar.addEventListener("click", clearForm);
-
-      btnExcluir.addEventListener("click", ()=>{
-        const id = editId.value;
-        if(!id) return;
-        if(!confirm("Deseja excluir este produto?")) return;
-        products = products.filter(p=>p.id !== id);
-        saveProducts(products);
-        renderResumo();
-        clearForm();
-        renderLista();
-        alert("Produto excluído.");
-      });
-
-      // upload foto
-      file.addEventListener("change", async ()=>{
-        const f = file.files && file.files[0];
-        if(!f) return;
-
-        const okTypes = ["image/jpeg","image/png","image/webp","image/jpg"];
-        if(!okTypes.includes(f.type)){
-          alert("Use JPG, PNG ou WEBP.");
-          file.value = "";
-          return;
-        }
-
-        // limite simples para não explodir o localStorage
-        const maxBytes = 900 * 1024; // ~900KB
-        if(f.size > maxBytes){
-          alert("Foto muito pesada. Use uma imagem mais leve (até ~900KB).");
-          file.value = "";
-          return;
-        }
-
-        const dataUrl = await readFileAsDataURL(f);
-        imageData.value = dataUrl;
-        preview.src = dataUrl;
-      });
-
-      btnRemoverFoto.addEventListener("click", ()=>{
-        file.value = "";
-        imageData.value = "";
-        preview.src = defaultSvg(nome.value || "Sem foto");
-      });
-
-      function readFileAsDataURL(file){
-        return new Promise((resolve, reject)=>{
-          const fr = new FileReader();
-          fr.onload = () => resolve(String(fr.result));
-          fr.onerror = reject;
-          fr.readAsDataURL(file);
+      async function readFileAsDataURL(f){
+        return new Promise((resolve,reject)=>{
+          const fr=new FileReader();
+          fr.onload=()=>resolve(String(fr.result));
+          fr.onerror=reject;
+          fr.readAsDataURL(f);
         });
       }
 
-      function parseListComma(v){
-        return (v||"")
-          .split(",")
-          .map(s=>s.trim())
-          .filter(Boolean);
-      }
-
-      produtoForm.addEventListener("submit", (e)=>{
-        e.preventDefault();
-
-        const pPrice = moneyToNumberBR(preco.value);
-        if(pPrice === null) { alert("Preço inválido."); return; }
-
-        const pOld = moneyToNumberBR(precoAntigo.value);
-        const sizesArr = parseListComma(tamanhos.value);
-        if(!sizesArr.length){
-          alert("Informe ao menos 1 tamanho (ex: 37,38,39).");
-          return;
-        }
-        const colorsArr = parseListComma(cores.value);
-
-        const payload = {
-          id: editId.value || genId(),
-          name: nome.value.trim(),
-          brand: marca.value.trim(),
-          category: categoria.value,
-          price: pPrice,
-          oldPrice: pOld,
-          sizes: sizesArr,
-          colors: colorsArr,
-          desc: desc.value.trim(),
-          image: imageData.value.trim(),
-          active: ativo.value === "true"
-        };
-
-        if(!payload.name || !payload.brand || !payload.category || !payload.desc){
-          alert("Preencha os campos obrigatórios.");
-          return;
-        }
-
-        const idx = products.findIndex(x=>x.id === payload.id);
-        if(idx >= 0) products[idx] = payload;
-        else products.unshift(payload);
-
-        saveProducts(products);
-        renderResumo();
-        renderLista();
-        clearForm();
-        alert("Produto salvo!");
+      file.addEventListener("change", async ()=>{
+        const f=file.files && file.files[0];
+        if(!f) return;
+        const okTypes=["image/jpeg","image/png","image/webp","image/jpg"];
+        if(!okTypes.includes(f.type)){ alert("Use JPG/PNG/WEBP."); file.value=""; return; }
+        const maxBytes=900*1024;
+        if(f.size>maxBytes){ alert("Imagem muito pesada (até ~900KB)."); file.value=""; return; }
+        const dataUrl=await readFileAsDataURL(f);
+        imageData.value=dataUrl;
+        preview.src=dataUrl;
       });
 
-      // lista
-      function renderLista(){
-        const q = normalize(filtro.value);
-        const list = products
-          .slice()
-          .sort((a,b)=> (b.active?1:0) - (a.active?1:0))
-          .filter(p=>{
-            if(!q) return true;
-            const hay = normalize(`${p.name} ${p.brand} ${p.category} ${p.desc}`);
-            return hay.includes(q);
-          });
+      removePhoto.addEventListener("click", ()=>{
+        file.value="";
+        imageData.value="";
+        preview.src=defaultSvg(name.value || "Sem foto");
+      });
 
-        listaInfo.textContent = `Mostrando ${list.length} produto(s)`;
-        lista.innerHTML = list.map(p=>{
-          const imgSrc = p.image || defaultSvg(p.name);
+      function renderList(){
+        const products=loadProducts();
+        count.textContent = `${products.length} produto(s)`;
+
+        listEl.innerHTML = products.slice().map(p=>{
+          const img = p.image || defaultSvg(p.name);
           return `
             <article class="card">
               <div class="card__img">
-                <img src="${imgSrc}" alt="${escapeAttr(p.name)}" />
+                ${p.discountPercent ? `<div class="badgeOff">-${Number(p.discountPercent)||0}%</div>` : ""}
+                <img src="${img}" alt="${escapeHtml(p.name)}">
               </div>
               <div class="card__body">
                 <div class="card__title">${escapeHtml(p.name)}</div>
                 <div class="card__meta">
-                  <span class="pill">${escapeHtml(p.brand)}</span>
-                  <span class="pill">${escapeHtml(capCategory(p.category))}</span>
+                  <span class="pill">${escapeHtml(p.brand||"")}</span>
+                  <span class="pill">${escapeHtml(p.category||"")}</span>
                   <span class="pill">${p.active ? "Ativo" : "Inativo"}</span>
                 </div>
-                <div class="muted">${escapeHtml(p.desc)}</div>
-                <div class="priceRow">
-                  <div>
-                    <div class="price">${moneyBRL(p.price)}</div>
-                    <div class="old">${p.oldPrice ? moneyBRL(p.oldPrice) : "—"}</div>
-                  </div>
-                </div>
-                <div class="muted">Tamanhos: ${escapeHtml((p.sizes||[]).join(", "))}</div>
-                ${p.colors && p.colors.length ? `<div class="muted">Cores: ${escapeHtml(p.colors.join(", "))}</div>` : ""}
-
-                <div class="card__actions">
+                <div class="muted">${escapeHtml(p.desc||"")}</div>
+                <div class="actions">
                   <button class="btn btn--primary" type="button" data-edit="${p.id}">Editar</button>
                 </div>
               </div>
@@ -574,102 +266,113 @@
           `;
         }).join("");
 
-        if(!list.length){
-          lista.innerHTML = `<div class="muted" style="padding:10px">Nenhum produto encontrado.</div>`;
+        if(!products.length){
+          listEl.innerHTML = `<div class="muted" style="padding:10px">Nenhum produto cadastrado.</div>`;
         }
       }
 
-      lista.addEventListener("click", (e)=>{
-        const btn = e.target.closest("[data-edit]");
+      listEl.addEventListener("click",(e)=>{
+        const btn=e.target.closest("[data-edit]");
         if(!btn) return;
-        const id = btn.getAttribute("data-edit");
-        const p = products.find(x=>x.id === id);
+        const pid=btn.getAttribute("data-edit");
+        const products=loadProducts();
+        const p=products.find(x=>x.id===pid);
         if(!p) return;
-        setTab("novo");
-        fillForm(p);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+
+        id.value=p.id;
+        name.value=p.name||"";
+        brand.value=p.brand||"";
+        category.value=p.category||"";
+        active.value=String(!!p.active);
+
+        price.value=String(p.price ?? "").replace(".",",");
+        oldPrice.value=String(p.oldPrice ?? "").replace(".",",");
+        discountPercent.value=String(p.discountPercent ?? "");
+        installments.value=String(p.installments ?? "");
+
+        sizes.value=Array.isArray(p.sizes)?p.sizes.join(","):"";
+        colors.value=Array.isArray(p.colors)?p.colors.join(","):"";
+        desc.value=p.desc||"";
+
+        imageData.value=p.image||"";
+        preview.src=p.image||defaultSvg(p.name);
+
+        deleteBtn.style.display="";
+        window.scrollTo({top:0,behavior:"smooth"});
       });
 
-      filtro.addEventListener("input", renderLista);
-      limparFiltro.addEventListener("click", ()=>{ filtro.value=""; renderLista(); filtro.focus(); });
-
-      // JSON modal
-      function openJsonModal(){
-        jsonModal.classList.add("is-open");
-        jsonModal.setAttribute("aria-hidden","false");
-        document.body.style.overflow="hidden";
-      }
-      function closeJsonModal(){
-        jsonModal.classList.remove("is-open");
-        jsonModal.setAttribute("aria-hidden","true");
-        document.body.style.overflow="";
-      }
-      jsonModal.addEventListener("click",(e)=>{
-        if(e.target.matches("[data-close]") || e.target.closest("[data-close]")) closeJsonModal();
-      });
-      document.addEventListener("keydown",(e)=>{ if(e.key==="Escape") closeJsonModal(); });
-
-      btnExport.addEventListener("click", ()=>{
-        jsonTitle.textContent = "Exportar produtos (JSON)";
-        jsonSubtitle.textContent = "Copie e guarde";
-        jsonArea.value = JSON.stringify(products, null, 2);
-        openJsonModal();
-      });
-
-      btnImport.addEventListener("click", ()=>{
-        jsonTitle.textContent = "Importar produtos (JSON)";
-        jsonSubtitle.textContent = "Cole e clique em Aplicar";
-        jsonArea.value = "";
-        openJsonModal();
-      });
-
-      btnCopiarJson.addEventListener("click", async ()=>{
-        try{
-          await navigator.clipboard.writeText(jsonArea.value);
-          alert("Copiado!");
-        }catch{
-          alert("Não consegui copiar automaticamente. Copie manualmente.");
-        }
-      });
-
-      btnAplicarJson.addEventListener("click", ()=>{
-        try{
-          const parsed = JSON.parse(jsonArea.value || "[]");
-          if(!Array.isArray(parsed)) throw new Error("Formato inválido");
-          for(const p of parsed){
-            if(!p.id || !p.name || !p.brand || !p.category || !p.price || !p.sizes) throw new Error("JSON incompleto");
-          }
-          products = parsed.map(p=>({
-            ...p,
-            active: !!p.active,
-            sizes: Array.isArray(p.sizes) ? p.sizes : [],
-            colors: Array.isArray(p.colors) ? p.colors : []
-          }));
-          saveProducts(products);
-          renderResumo();
-          renderLista();
-          closeJsonModal();
-          alert("Importado com sucesso!");
-        }catch{
-          alert("JSON inválido.");
-        }
-      });
-
-      btnReset.addEventListener("click", ()=>{
-        if(!confirm("Restaurar padrão? Isso substitui sua lista atual.")) return;
-        localStorage.removeItem(LS_PRODUCTS);
-        products = loadProducts();
+      deleteBtn.addEventListener("click", ()=>{
+        const pid=id.value;
+        if(!pid) return;
+        if(!confirm("Excluir este produto?")) return;
+        let products=loadProducts();
+        products=products.filter(p=>p.id!==pid);
         saveProducts(products);
-        renderResumo();
-        renderLista();
         clearForm();
-        alert("Restaurado.");
+        renderList();
+        setStatus();
+        alert("Excluído.");
+      });
+
+      clearBtn.addEventListener("click", clearForm);
+
+      form.addEventListener("submit",(e)=>{
+        e.preventDefault();
+
+        const pPrice = moneyToNumberBR(price.value);
+        if(pPrice===null){ alert("Preço inválido."); return; }
+
+        const pOld = moneyToNumberBR(oldPrice.value);
+        const disc = Number((discountPercent.value||"").trim());
+        const inst = Number((installments.value||"").trim());
+
+        const sz = parseComma(sizes.value);
+        if(!sz.length){ alert("Informe tamanhos (ex: 37,38,39)."); return; }
+        const cl = parseComma(colors.value);
+
+        const payload={
+          id: id.value || genId(),
+          name: name.value.trim(),
+          brand: brand.value.trim(),
+          category: category.value,
+          active: active.value==="true",
+          price: pPrice,
+          oldPrice: pOld,
+          discountPercent: Number.isFinite(disc) ? disc : 0,
+          installments: Number.isFinite(inst) && inst>0 ? inst : 5,
+          sizes: sz,
+          colors: cl,
+          desc: desc.value.trim(),
+          image: imageData.value.trim(),
+          stars: 5
+        };
+
+        if(!payload.name || !payload.brand || !payload.category || !payload.desc){
+          alert("Preencha nome, marca, categoria e descrição.");
+          return;
+        }
+
+        let products=loadProducts();
+        const idx=products.findIndex(p=>p.id===payload.id);
+        if(idx>=0) products[idx]=payload;
+        else products.unshift(payload);
+
+        saveProducts(products);
+
+        // ✅ dispara evento pra outras páginas atualizarem
+        localStorage.setItem("__magao_ping__", String(Date.now()));
+
+        clearForm();
+        renderList();
+        setStatus();
+        alert("Salvo!");
       });
 
       // init
-      renderResumo();
+      migrateProducts();
+      setStatus();
       clearForm();
-      setTab("novo");
+      renderList();
     })();
   </script>
 </body>
