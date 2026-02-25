@@ -1,89 +1,61 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Magão Tênis</title>
-  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="container topbar__row">
-      <button class="iconBtn" type="button" aria-label="Menu">☰</button>
 
-      <a class="brand" href="./index.html" aria-label="Magão Tênis">
-        <span class="brand__logo">MT</span>
-        <span class="brand__name">MAGÃO TÊNIS</span>
-      </a>
+<header class="topbar">
+  <div class="container topbar__row">
+    <div class="logo">MAGÃO TÊNIS</div>
 
-      <div class="search" role="search" aria-label="Pesquisar">
-        <input id="searchInput" type="search" placeholder="Buscar produtos..." autocomplete="off" />
-        <button id="clearSearchBtn" class="clearBtn" type="button" aria-label="Limpar">✕</button>
+    <div class="search">
+      <input id="searchInput" type="search" placeholder="Buscar produtos...">
+    </div>
+
+    <button id="openCartBtn" class="cartBtn">
+      Carrinho <span id="cartCount">0</span>
+    </button>
+  </div>
+</header>
+
+<main class="container">
+  <h2 class="sectionTitle">Produtos</h2>
+  <div id="grid" class="grid"></div>
+</main>
+
+<!-- Carrinho -->
+<aside id="cartDrawer" class="drawer">
+  <div class="drawer__panel">
+    <div class="drawer__header">
+      <h3>Carrinho</h3>
+      <button id="closeCartBtn">✕</button>
+    </div>
+
+    <div id="cartItems"></div>
+
+    <div class="drawer__footer">
+      <div class="subtotal">
+        Subtotal: <b id="subtotal">R$ 0,00</b>
       </div>
 
-      <button id="openCartBtn" class="iconBtn" type="button" aria-label="Carrinho">
-        🛒 <span id="cartCount" class="badge">0</span>
+      <button id="goCheckoutBtn" class="btnPrimary">
+        Finalizar compra
       </button>
     </div>
-  </header>
-
-  <div class="chipsWrap">
-    <nav class="container chips" aria-label="Categorias">
-      <button class="chip is-active" data-category="all" type="button">Todos</button>
-      <button class="chip" data-category="corrida" type="button">Corrida</button>
-      <button class="chip" data-category="casual" type="button">Casual</button>
-      <button class="chip" data-category="basket" type="button">Basquete</button>
-      <button class="chip" data-category="skate" type="button">Skate</button>
-    </nav>
   </div>
+</aside>
 
-  <main class="container">
-    <section class="sectionTitleRow">
-      <h2>Ofertas</h2>
-      <div class="muted" id="resultsInfo">Carregando…</div>
-    </section>
+<footer>
+  <div class="container footerRow">
+    © <span id="year"></span> Magão Tênis
+    <a href="admin.html">Admin</a>
+  </div>
+</footer>
 
-    <section id="grid" class="grid" aria-live="polite"></section>
-  </main>
-
-  <!-- Carrinho -->
-  <aside id="cartDrawer" class="drawer" aria-hidden="true">
-    <div class="drawer__backdrop" data-close></div>
-
-    <div class="drawer__panel" role="dialog" aria-modal="true" aria-label="Carrinho">
-      <div class="drawer__header">
-        <div>
-          <div class="drawer__title">Carrinho</div>
-          <div class="muted" id="cartSummary">0 itens</div>
-        </div>
-        <button class="btn btn--ghost" type="button" data-close aria-label="Fechar">✕</button>
-      </div>
-
-      <div id="cartItems" class="drawer__body"></div>
-
-      <div class="drawer__footer">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-          <div>
-            <div class="muted">Subtotal</div>
-            <div style="font-weight:900;font-size:18px" id="subtotal">R$ 0,00</div>
-          </div>
-
-          <!-- ✅ vira botão (não link), só navega se tiver item -->
-          <button id="goCheckoutBtn" class="btn btn--primary" type="button">Finalizar compra</button>
-        </div>
-
-        <button id="clearCartBtn" class="btn btn--danger" type="button">Esvaziar carrinho</button>
-      </div>
-    </div>
-  </aside>
-
-  <footer class="footer">
-    <div class="container footerRow">
-      <div class="muted">© <span id="year"></span> Magão Tênis</div>
-      <a class="muted" href="./admin.html">Admin</a>
-    </div>
-  </footer>
-
-  <script src="./app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
