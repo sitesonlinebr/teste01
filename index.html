@@ -1,4 +1,3 @@
-<!-- index.html (SUBSTITUIR) -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -10,22 +9,25 @@
 <body>
   <header class="topbar">
     <div class="container topbar__row">
-      <a class="brand" href="./index.html" aria-label="Magão Tênis - Home">
+      <button class="iconBtn" type="button" aria-label="Menu">☰</button>
+
+      <a class="brand" href="./index.html" aria-label="Magão Tênis">
         <span class="brand__logo">MT</span>
-        <span class="brand__name">Magão Tênis</span>
+        <span class="brand__name">MAGÃO TÊNIS</span>
       </a>
 
-      <div class="search">
-        <input id="searchInput" type="search" placeholder="Pesquisar tênis, marca, modelo..." autocomplete="off" />
-        <button id="clearSearchBtn" class="btn btn--ghost" type="button" title="Limpar">✕</button>
+      <div class="search" role="search" aria-label="Pesquisar">
+        <input id="searchInput" type="search" placeholder="Buscar produtos..." autocomplete="off" />
+        <button id="clearSearchBtn" class="clearBtn" type="button" aria-label="Limpar">✕</button>
       </div>
 
-      <button id="openCartBtn" class="cartBtn" type="button" aria-label="Abrir carrinho">
-        🛒 <span class="cartBtn__text">Carrinho</span>
-        <span id="cartCount" class="badge">0</span>
+      <button id="openCartBtn" class="iconBtn" type="button" aria-label="Carrinho">
+        🛒 <span id="cartCount" class="badge">0</span>
       </button>
     </div>
+  </header>
 
+  <div class="chipsWrap">
     <nav class="container chips" aria-label="Categorias">
       <button class="chip is-active" data-category="all" type="button">Todos</button>
       <button class="chip" data-category="corrida" type="button">Corrida</button>
@@ -33,18 +35,18 @@
       <button class="chip" data-category="basket" type="button">Basquete</button>
       <button class="chip" data-category="skate" type="button">Skate</button>
     </nav>
-  </header>
+  </div>
 
   <main class="container">
-    <section class="sectionTitleRow" style="margin-top:10px">
-      <h2>Produtos</h2>
-      <div class="muted" id="resultsInfo">Mostrando todos os produtos</div>
+    <section class="sectionTitleRow">
+      <h2>Ofertas</h2>
+      <div class="muted" id="resultsInfo">Carregando…</div>
     </section>
 
     <section id="grid" class="grid" aria-live="polite"></section>
   </main>
 
-  <!-- Drawer Carrinho -->
+  <!-- Carrinho -->
   <aside id="cartDrawer" class="drawer" aria-hidden="true">
     <div class="drawer__backdrop" data-close></div>
 
@@ -60,29 +62,23 @@
       <div id="cartItems" class="drawer__body"></div>
 
       <div class="drawer__footer">
-        <div class="totals">
-          <div class="totals__row">
-            <span>Subtotal</span>
-            <b id="subtotal">R$ 0,00</b>
+        <div class="priceRow">
+          <div>
+            <div class="muted">Subtotal</div>
+            <div style="font-weight:900;font-size:18px" id="subtotal">R$ 0,00</div>
           </div>
-          <div class="totals__row muted">
-            <span>Frete</span>
-            <span>A combinar</span>
-          </div>
+          <a class="btn btn--primary" href="./checkout.html">Finalizar</a>
         </div>
 
-        <div class="drawer__actions">
-          <a class="btn btn--primary" href="./checkout.html">Finalizar compra</a>
-          <button id="clearCartBtn" class="btn btn--danger" type="button">Esvaziar carrinho</button>
-        </div>
+        <button id="clearCartBtn" class="btn btn--danger" type="button">Esvaziar carrinho</button>
       </div>
     </div>
   </aside>
 
   <footer class="footer">
-    <div class="container footer__row">
+    <div class="container footerRow">
       <div class="muted">© <span id="year"></span> Magão Tênis</div>
-      <div class="muted">Loja oficial</div>
+      <a class="muted" href="./admin.html">Admin</a>
     </div>
   </footer>
 
