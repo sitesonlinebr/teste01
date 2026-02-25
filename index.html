@@ -8,48 +8,41 @@
 </head>
 <body>
 
-<header class="topbar">
-  <div class="container topbar__row">
+<header class="header">
+  <div class="container headerRow">
     <div class="logo">MAGÃO TÊNIS</div>
 
-    <div class="search">
-      <input id="searchInput" type="search" placeholder="Buscar produtos...">
-    </div>
+    <input id="searchInput" class="searchInput" type="search" placeholder="Buscar produtos...">
 
-    <button id="openCartBtn" class="cartBtn">
+    <button id="cartBtn" class="cartBtn">
       Carrinho <span id="cartCount">0</span>
     </button>
   </div>
 </header>
 
 <main class="container">
-  <h2 class="sectionTitle">Produtos</h2>
-  <div id="grid" class="grid"></div>
+  <h2 class="title">Produtos</h2>
+  <div id="productGrid" class="grid"></div>
 </main>
 
-<!-- Carrinho -->
-<aside id="cartDrawer" class="drawer">
-  <div class="drawer__panel">
-    <div class="drawer__header">
-      <h3>Carrinho</h3>
-      <button id="closeCartBtn">✕</button>
+<!-- Drawer Carrinho -->
+<div id="cartDrawer" class="drawer">
+  <div class="drawerPanel">
+    <div class="drawerHeader">
+      <h3>Seu Carrinho</h3>
+      <button id="closeCart">✕</button>
     </div>
 
     <div id="cartItems"></div>
 
-    <div class="drawer__footer">
-      <div class="subtotal">
-        Subtotal: <b id="subtotal">R$ 0,00</b>
-      </div>
-
-      <button id="goCheckoutBtn" class="btnPrimary">
-        Finalizar compra
-      </button>
+    <div class="drawerFooter">
+      <div>Subtotal <b id="subtotal">R$ 0,00</b></div>
+      <button id="checkoutBtn" class="primaryBtn">Finalizar compra</button>
     </div>
   </div>
-</aside>
+</div>
 
-<footer>
+<footer class="footer">
   <div class="container footerRow">
     © <span id="year"></span> Magão Tênis
     <a href="admin.html">Admin</a>
