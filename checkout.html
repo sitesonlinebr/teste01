@@ -1,85 +1,28 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Checkout • Magão Tênis</title>
-  <link rel="stylesheet" href="./styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="container topbar__row">
-      <a class="brand" href="./index.html">
-        <span class="brand__logo">MT</span>
-        <span class="brand__name">CHECKOUT</span>
-      </a>
-      <div style="flex:1"></div>
-      <a class="iconBtn" href="./index.html">Voltar</a>
-    </div>
-  </header>
 
-  <main class="container" style="padding:14px 0 26px">
-    <section class="sectionTitleRow">
-      <h2>Seu pedido</h2>
-      <div class="muted" id="ckSummary">—</div>
-    </section>
+<main class="container">
+  <h2>Finalizar pedido</h2>
 
-    <section id="ckCartList" class="card" style="padding:12px"></section>
+  <form id="form">
+    <input id="nome" placeholder="Nome" required>
+    <select id="pagamento" required>
+      <option value="">Pagamento</option>
+      <option>Pix</option>
+      <option>Cartão</option>
+    </select>
 
-    <section class="sectionTitleRow">
-      <h2>Dados</h2>
-      <div class="muted">Envia direto no WhatsApp</div>
-    </section>
+    <button class="btnPrimary">Enviar pedido</button>
+  </form>
+</main>
 
-    <section class="card" style="padding:14px">
-      <form id="checkoutForm" style="display:flex;flex-direction:column;gap:12px">
-        <div class="opts">
-          <div class="optBox">
-            <b>Nome</b>
-            <input id="nome" required placeholder="Seu nome" style="border:0;outline:0;background:transparent;font-weight:900">
-          </div>
-          <div class="optBox">
-            <b>Telefone (opcional)</b>
-            <input id="telefone" placeholder="(DDD) ..." style="border:0;outline:0;background:transparent;font-weight:900">
-          </div>
-        </div>
-
-        <div class="optBox">
-          <b>Endereço</b>
-          <input id="endereco" required placeholder="Rua, número, bairro..." style="border:0;outline:0;background:transparent;font-weight:900">
-        </div>
-
-        <div class="opts">
-          <div class="optBox">
-            <b>Pagamento</b>
-            <select id="pagamento" required style="border:0;outline:0;background:transparent;font-weight:900">
-              <option value="">Selecione…</option>
-              <option value="Cartão (Débito)">Cartão (Débito)</option>
-              <option value="Cartão (Crédito)">Cartão (Crédito)</option>
-              <option value="Pix">Pix</option>
-              <option value="Dinheiro">Dinheiro</option>
-            </select>
-          </div>
-          <div class="optBox" id="trocoWrap" style="display:none">
-            <b>Troco para</b>
-            <input id="troco" inputmode="decimal" placeholder="Ex: 200" style="border:0;outline:0;background:transparent;font-weight:900">
-          </div>
-        </div>
-
-        <div class="optBox">
-          <b>Observações (opcional)</b>
-          <input id="obs" placeholder="Ex: deixar na portaria" style="border:0;outline:0;background:transparent;font-weight:900">
-        </div>
-
-        <div class="actions">
-          <button class="btn btn--primary" type="submit">Finalizar Pedido</button>
-          <button id="limpar" class="btn btn--danger" type="button">Limpar carrinho</button>
-        </div>
-      </form>
-    </section>
-  </main>
-
-  <script src="./checkout.js"></script>
+<script src="checkout.js"></script>
 </body>
 </html>
-
