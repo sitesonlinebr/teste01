@@ -1,112 +1,76 @@
 (function () {
+  // ✅ CHAVES PADRÃO (fixo)
   const LS_PRODUCTS = "magao_products";
   const LS_CART = "magao_cart";
-  const LS_LAST_CATEGORY = "magao_category";
+  const LS_CATEGORY = "magao_category";
 
-  const LEGACY_PRODUCTS = ["magao_products_v2", "magao_products_v1"];
+  // ✅ chaves antigas (migração automática)
+  const LEGACY_PRODUCTS = ["magao_products_v2", "magao_products_v1", "magao_products_v1"];
   const LEGACY_CART = ["magao_cart_v2", "magao_cart_v1"];
 
   const $ = (id) => document.getElementById(id);
 
+  function readJSON(key) {
+    try { return JSON.parse(localStorage.getItem(key) || "null"); }
+    catch { return null; }
+  }
+  function writeJSON(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+  function migrateOnce() {
+    if (!localStorage.getItem(LS_PRODUCTS)) {
+      for (const k of LEGACY_PRODUCTS) {
+        const v = readJSON(k);
+        if (Array.isArray(v) && v.length) { writeJSON(LS_PRODUCTS, v); break; }
+      }
+    }
+    if (!localStorage.getItem(LS_CART)) {
+      for (const k of LEGACY_CART) {
+        const v = readJSON(k);
+        if (Array.isArray(v) && v.length) { writeJSON(LS_CART, v); break; }
+      }
+    }
+  }
+
   function normalize(s) {
-    return (s || "")
-      .toString()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .trim();
+    return (s || "").toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
   }
-
-  function moneyBRL(value) {
-    return (Number(value) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-  }
-
+  function moneyBRL(v) { return (Number(v) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }); }
   function capCategory(cat) {
     const map = { corrida: "Corrida", casual: "Casual", basket: "Basquete", skate: "Skate" };
-    return map[cat] || cat;
+    return map[cat] || cat || "—";
   }
-
   function escapeXml(unsafe) {
-    return String(unsafe).replace(/[<>&'"]/g, c => ({
-      "<": "&lt;", ">": "&gt;", "&": "&amp;", "'": "&apos;", '"': "&quot;"
-    }[c]));
+    return String(unsafe).replace(/[<>&'"]/g, c => ({ "<":"&lt;",">":"&gt;","&":"&amp;","'":"&apos;",'"':"&quot;" }[c]));
   }
 
   function defaultSvg(name) {
     const text = (name || "Produto").split(" ").slice(0, 2).join(" ");
     const svg = `
       <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600">
-        <defs>
-          <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#2563eb" stop-opacity="0.18"/>
-            <stop offset="1" stop-color="#60a5fa" stop-opacity="0.20"/>
-          </linearGradient>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#g)"/>
+        <rect width="100%" height="100%" fill="#ffffff"/>
         <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
-          font-family="Arial" font-size="44" fill="#0f172a" opacity="0.85">${escapeXml(text)}</text>
+          font-family="Arial" font-size="44" fill="#111827" opacity="0.7">${escapeXml(text)}</text>
       </svg>`;
     return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.trim());
-  }
-
-  function safeKey(productId, size, color) {
-    return encodeURIComponent([productId, size || "", color || ""].join("|"));
-  }
-
-  function parseKey(key) {
-    const decoded = decodeURIComponent(key || "");
-    const [productId, size, color] = decoded.split("|");
-    return { productId, size, color };
-  }
-
-  function readJSON(key) {
-    try {
-      const raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  }
-
-  function writeJSON(key, val) {
-    localStorage.setItem(key, JSON.stringify(val));
-  }
-
-  function migrateStorage() {
-    if (!localStorage.getItem(LS_PRODUCTS)) {
-      for (const k of LEGACY_PRODUCTS) {
-        const v = readJSON(k);
-        if (Array.isArray(v) && v.length) {
-          writeJSON(LS_PRODUCTS, v);
-          break;
-        }
-      }
-    }
-    if (!localStorage.getItem(LS_CART)) {
-      for (const k of LEGACY_CART) {
-        const v = readJSON(k);
-        if (Array.isArray(v) && v.length) {
-          writeJSON(LS_CART, v);
-          break;
-        }
-      }
-    }
   }
 
   function defaultProducts() {
     return [
       {
         id: "mt-001",
-        name: "Tênis Corrida AirFlow Pro",
-        brand: "Magão",
+        name: "Tênis Nike Revolution 8 (Demo)",
+        brand: "Nike",
         category: "corrida",
-        price: 249.9,
-        oldPrice: 329.9,
+        price: 341.99,
+        oldPrice: 399.99,
+        discountPercent: 15,
         sizes: ["37","38","39","40","41","42","43"],
         colors: ["Preto","Branco"],
-        desc: "Leve, confortável e com boa absorção de impacto.",
+        desc: "Velocidade e conforto para suas corridas.",
         image: "",
-        active: true
+        active: true,
+        stars: 5,
+        installments: 5
       }
     ];
   }
@@ -125,7 +89,10 @@
       active: !!p.active,
       sizes: Array.isArray(p.sizes) ? p.sizes : [],
       colors: Array.isArray(p.colors) ? p.colors : [],
-      image: p.image || defaultSvg(p.name)
+      image: p.image || defaultSvg(p.name),
+      stars: Math.min(5, Math.max(0, Number(p.stars ?? 5) || 5)),
+      installments: Math.min(12, Math.max(1, Number(p.installments ?? 5) || 5)),
+      discountPercent: Math.min(90, Math.max(0, Number(p.discountPercent ?? 0) || 0)),
     }));
   }
 
@@ -133,31 +100,35 @@
     const arr = readJSON(LS_CART);
     return Array.isArray(arr) ? arr : [];
   }
+  function writeCart(cart) { writeJSON(LS_CART, cart); }
 
-  function writeCart(cart) {
-    writeJSON(LS_CART, cart);
+  // chave segura (não quebra data-*)
+  function safeKey(productId, size, color) { return encodeURIComponent([productId, size || "", color || ""].join("|")); }
+  function parseKey(key) {
+    const decoded = decodeURIComponent(key || "");
+    const [productId, size, color] = decoded.split("|");
+    return { productId, size, color };
   }
 
-  // ---------- UI refs ----------
+  // UI
   const grid = $("grid");
+  const resultsInfo = $("resultsInfo");
   const searchInput = $("searchInput");
   const clearSearchBtn = $("clearSearchBtn");
-  const resultsInfo = $("resultsInfo");
   const yearEl = $("year");
 
   const chips = Array.from(document.querySelectorAll(".chip"));
-  let activeCategory = localStorage.getItem(LS_LAST_CATEGORY) || "all";
+  let activeCategory = localStorage.getItem(LS_CATEGORY) || "all";
   let query = "";
 
   const cartDrawer = $("cartDrawer");
   const openCartBtn = $("openCartBtn");
   const cartItemsEl = $("cartItems");
-  const cartCountEl = $("cartCount");
   const cartSummaryEl = $("cartSummary");
+  const cartCountEl = $("cartCount");
   const subtotalEl = $("subtotal");
   const clearCartBtn = $("clearCartBtn");
 
-  // ---------- drawer ----------
   function openDrawer() {
     cartDrawer.classList.add("is-open");
     cartDrawer.setAttribute("aria-hidden", "false");
@@ -177,9 +148,8 @@
     const q = normalize(query);
     return PRODUCTS
       .filter(p => p.active)
+      .filter(p => (activeCategory === "all" || p.category === activeCategory))
       .filter(p => {
-        const inCat = activeCategory === "all" || p.category === activeCategory;
-        if (!inCat) return false;
         if (!q) return true;
         const hay = normalize(`${p.name} ${p.brand} ${p.category} ${p.desc}`);
         return hay.includes(q);
@@ -190,78 +160,81 @@
     const PRODUCTS = hydrateProducts(loadProducts());
     const list = filteredProducts(PRODUCTS);
 
-    grid.innerHTML = list.map(p => {
-      const hasColors = (p.colors || []).length > 0;
+    resultsInfo.textContent = `${list.length} produto(s)`;
 
+    grid.innerHTML = list.map(p => {
+      const hasColors = p.colors.length > 0;
       const sizeOptions = p.sizes.map(s => `<option value="${escapeXml(s)}">${escapeXml(s)}</option>`).join("");
       const colorOptions = hasColors ? p.colors.map(c => `<option value="${escapeXml(c)}">${escapeXml(c)}</option>`).join("") : "";
+
+      const stars = Array.from({ length: p.stars }, () => `<span class="star">★</span>`).join("");
+      const installmentValue = (Number(p.price) || 0) / (p.installments || 5);
 
       return `
         <article class="card">
           <div class="card__img">
+            ${p.discountPercent ? `<div class="badgeOff">-${p.discountPercent}%</div>` : ""}
             <img src="${p.image}" alt="${escapeXml(p.name)}" />
           </div>
 
           <div class="card__body">
+            <div class="stars" aria-label="Avaliação">${stars}</div>
+
             <div class="card__title">${escapeXml(p.name)}</div>
 
             <div class="card__meta">
               <span class="pill">${escapeXml(p.brand)}</span>
               <span class="pill">${escapeXml(capCategory(p.category))}</span>
+              ${p.colors.length ? `<span class="pill">${p.colors.length} cores</span>` : ""}
+              ${p.sizes.length ? `<span class="pill">${p.sizes.length} tamanhos</span>` : ""}
             </div>
 
             <div class="muted">${escapeXml(p.desc)}</div>
 
-            <div class="priceRow">
-              <div>
-                <div class="price">${moneyBRL(p.price)}</div>
-                <div class="old">${p.oldPrice ? moneyBRL(p.oldPrice) : "—"}</div>
-              </div>
+            <div>
+              ${p.oldPrice ? `<div class="old">${moneyBRL(p.oldPrice)}</div>` : `<div class="old"> </div>`}
+              <div class="price">${moneyBRL(p.price)} <span class="pixLine">no Pix</span></div>
+              <div class="installLine">ou ${p.installments}x de ${moneyBRL(installmentValue)}</div>
             </div>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
-              <div class="pill" style="display:flex;flex-direction:column;gap:6px">
-                <b style="font-size:12px;color:var(--muted)">Tamanho</b>
-                <select id="size_${p.id}" style="border:0;outline:0;background:transparent;color:var(--text)">
+            <div class="opts">
+              <div class="optBox">
+                <b>Tamanho</b>
+                <select id="size_${p.id}">
                   <option value="">Selecione</option>
                   ${sizeOptions}
                 </select>
               </div>
 
-              <div class="pill" style="display:flex;flex-direction:column;gap:6px;${hasColors ? "" : "opacity:.6"}">
-                <b style="font-size:12px;color:var(--muted)">Cor</b>
-                <select id="color_${p.id}" ${hasColors ? "" : "disabled"} style="border:0;outline:0;background:transparent;color:var(--text)">
+              <div class="optBox" style="${hasColors ? "" : "opacity:.6"}">
+                <b>Cor</b>
+                <select id="color_${p.id}" ${hasColors ? "" : "disabled"}>
                   <option value="">${hasColors ? "Selecione" : "Sem cor"}</option>
                   ${colorOptions}
                 </select>
               </div>
             </div>
 
-            <div class="card__actions">
+            <div class="actions">
               <button class="btn btn--primary" data-buy="${p.id}" type="button">Comprar</button>
-              <button class="btn" data-add="${p.id}" type="button">Adicionar ao carrinho</button>
+              <button class="btn" data-add="${p.id}" type="button">Adicionar</button>
             </div>
           </div>
         </article>
       `;
     }).join("");
-
-    resultsInfo.textContent =
-      activeCategory === "all" && !query
-        ? "Mostrando todos os produtos"
-        : `Encontrados ${list.length} produto(s)`;
   }
 
   function cartTotals(PRODUCTS) {
     const cart = readCart();
     let count = 0;
     let subtotal = 0;
-
     for (const it of cart) {
       const p = PRODUCTS.find(x => x.id === it.productId);
       if (!p) continue;
-      count += (Number(it.qty) || 0);
-      subtotal += (Number(p.price) || 0) * (Number(it.qty) || 0);
+      const q = Number(it.qty) || 0;
+      count += q;
+      subtotal += (Number(p.price) || 0) * q;
     }
     return { count, subtotal };
   }
@@ -269,37 +242,34 @@
   function renderCartUI() {
     const PRODUCTS = hydrateProducts(loadProducts());
 
-    const validIds = new Set(PRODUCTS.map(p => p.id));
-    const cleaned = readCart().filter(i => validIds.has(i.productId));
-    writeCart(cleaned);
+    // remove itens que não existem mais
+    const valid = new Set(PRODUCTS.map(p => p.id));
+    const cart = readCart().filter(i => valid.has(i.productId));
+    writeCart(cart);
 
     const totals = cartTotals(PRODUCTS);
     cartCountEl.textContent = String(totals.count);
     cartSummaryEl.textContent = `${totals.count} item(ns)`;
     subtotalEl.textContent = moneyBRL(totals.subtotal);
 
-    if (!cleaned.length) {
-      cartItemsEl.innerHTML = `<div class="muted" style="padding:10px">Seu carrinho está vazio 🙂</div>`;
+    if (!cart.length) {
+      cartItemsEl.innerHTML = `<div class="muted" style="padding:10px">Carrinho vazio.</div>`;
       return;
     }
 
-    cartItemsEl.innerHTML = cleaned.map(it => {
+    cartItemsEl.innerHTML = cart.map(it => {
       const p = PRODUCTS.find(x => x.id === it.productId);
       if (!p) return "";
       const key = safeKey(it.productId, it.size, it.color);
-
       return `
         <div class="cartItem">
-          <div class="cartItem__thumb">
-            <img src="${p.image}" alt="${escapeXml(p.name)}" />
-          </div>
-
+          <div class="cartThumb"><img src="${p.image}" alt="${escapeXml(p.name)}"></div>
           <div>
-            <div class="cartItem__title">${escapeXml(p.name)}</div>
-            <div class="cartItem__muted">${moneyBRL(p.price)} • ${escapeXml(p.brand)} • ${escapeXml(capCategory(p.category))}</div>
-            <div class="cartItem__muted">Tamanho: <b>${escapeXml(it.size || "-")}</b>${it.color ? ` • Cor: <b>${escapeXml(it.color)}</b>` : ""}</div>
+            <div class="cartTitle">${escapeXml(p.name)}</div>
+            <div class="cartSub">${escapeXml(p.brand)} • ${escapeXml(capCategory(p.category))}</div>
+            <div class="cartSub">Tamanho: <b>${escapeXml(it.size || "-")}</b>${it.color ? ` • Cor: <b>${escapeXml(it.color)}</b>` : ""}</div>
+            <div class="cartSub">${moneyBRL(p.price)} cada</div>
           </div>
-
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
             <div class="qty">
               <button type="button" data-dec="${key}">−</button>
@@ -319,16 +289,15 @@
     const p = PRODUCTS.find(x => x.id === productId && x.active);
     if (!p) return alert("Produto indisponível.");
 
-    const sizeSel = document.getElementById(`size_${productId}`);
-    const colorSel = document.getElementById(`color_${productId}`);
-    const size = sizeSel ? sizeSel.value : "";
-    const color = colorSel ? colorSel.value : "";
+    const size = document.getElementById(`size_${productId}`)?.value || "";
+    const color = document.getElementById(`color_${productId}`)?.value || "";
 
     if (!size) return alert("Selecione o tamanho.");
-    if ((p.colors || []).length && !color) return alert("Selecione a cor.");
+    if (p.colors.length && !color) return alert("Selecione a cor.");
+
+    const key = safeKey(productId, size, color);
 
     let cart = readCart();
-    const key = safeKey(productId, size, color);
     const idx = cart.findIndex(i => safeKey(i.productId, i.size, i.color) === key);
 
     if (idx >= 0) cart[idx].qty = (Number(cart[idx].qty) || 0) + 1;
@@ -339,7 +308,7 @@
     if (openAfter) openDrawer();
   }
 
-  function setQtyByKey(encodedKey, deltaOrZero) {
+  function adjustQty(encodedKey, deltaOrZero) {
     const { productId, size, color } = parseKey(encodedKey);
     const key = safeKey(productId, size, color);
 
@@ -347,12 +316,11 @@
     const idx = cart.findIndex(i => safeKey(i.productId, i.size, i.color) === key);
     if (idx === -1) return;
 
-    if (deltaOrZero === 0) {
-      cart.splice(idx, 1);
-    } else {
-      const nextQty = Math.max(0, (Number(cart[idx].qty) || 0) + deltaOrZero);
-      if (nextQty === 0) cart.splice(idx, 1);
-      else cart[idx].qty = nextQty;
+    if (deltaOrZero === 0) cart.splice(idx, 1);
+    else {
+      const next = Math.max(0, (Number(cart[idx].qty) || 0) + deltaOrZero);
+      if (next === 0) cart.splice(idx, 1);
+      else cart[idx].qty = next;
     }
 
     writeCart(cart);
@@ -364,11 +332,11 @@
     renderCartUI();
   }
 
-  // ---------- events ----------
+  // events
   chips.forEach(ch => {
     ch.addEventListener("click", () => {
       activeCategory = ch.dataset.category;
-      localStorage.setItem(LS_LAST_CATEGORY, activeCategory);
+      localStorage.setItem(LS_CATEGORY, activeCategory);
       setActiveChip();
       renderGrid();
     });
@@ -377,45 +345,39 @@
   grid.addEventListener("click", (e) => {
     const buy = e.target.closest("[data-buy]");
     const add = e.target.closest("[data-add]");
-
     if (buy) return addToCart(buy.getAttribute("data-buy"), true);
     if (add) return addToCart(add.getAttribute("data-add"), false);
   });
 
+  $("openCartBtn").addEventListener("click", openDrawer);
   cartDrawer.addEventListener("click", (e) => {
     if (e.target.matches("[data-close]") || e.target.closest("[data-close]")) closeDrawer();
-
     const inc = e.target.closest("[data-inc]");
     const dec = e.target.closest("[data-dec]");
     const del = e.target.closest("[data-del]");
-
-    if (inc) setQtyByKey(inc.getAttribute("data-inc"), +1);
-    if (dec) setQtyByKey(dec.getAttribute("data-dec"), -1);
-    if (del) setQtyByKey(del.getAttribute("data-del"), 0);
+    if (inc) adjustQty(inc.getAttribute("data-inc"), +1);
+    if (dec) adjustQty(dec.getAttribute("data-dec"), -1);
+    if (del) adjustQty(del.getAttribute("data-del"), 0);
   });
 
-  openCartBtn.addEventListener("click", openDrawer);
   clearCartBtn.addEventListener("click", clearCart);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDrawer(); });
 
-  searchInput.addEventListener("input", () => {
-    query = searchInput.value || "";
-    renderGrid();
+  searchInput.addEventListener("input", () => { query = searchInput.value || ""; renderGrid(); });
+  clearSearchBtn.addEventListener("click", () => { searchInput.value = ""; query = ""; renderGrid(); searchInput.focus(); });
+
+  // ✅ Atualiza automaticamente se o admin mexer (mesmo em outra aba)
+  window.addEventListener("storage", (ev) => {
+    if (ev.key === LS_PRODUCTS || ev.key === LS_CART) {
+      renderGrid();
+      renderCartUI();
+    }
   });
 
-  clearSearchBtn.addEventListener("click", () => {
-    searchInput.value = "";
-    query = "";
-    renderGrid();
-    searchInput.focus();
-  });
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeDrawer();
-  });
-
-  // ---------- init ----------
-  migrateStorage();
+  // init
+  migrateOnce();
   yearEl.textContent = String(new Date().getFullYear());
+  activeCategory = localStorage.getItem(LS_CATEGORY) || "all";
   setActiveChip();
   renderGrid();
   renderCartUI();
