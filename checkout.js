@@ -1,4 +1,163 @@
 (function () {
+  const WHATSAPP_NUMBER = "5538998347326";
+  const LS_PRODUCTS = "magao_products";
+  const LS_CART = "magao_cart";
+
+  const $ = (id) => document.getElementById(id);
+
+  function readJSON(key) {
+    try { return JSON.parse(localStorage.getItem(key) || "null"); }
+    catch { return null; }
+  }
+  function writeJSON(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+  function moneyBRL(v) { return (Number(v) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }); }
+  function capCategory(cat){
+    const map={corrida:"Corrida",casual:"Casual",basket:"Basquete",skate:"Skate"};
+    return map[cat]||cat||"—";
+  }
+  function escapeXml(unsafe){
+    return String(unsafe).replace(/[<>&'"]/g,c=>({ "<":"&lt;",">":"&gt;","&":"&amp;","'":"&apos;",'"':"&quot;" }[c]));
+  }
+
+  function loadProducts(){
+    const arr = readJSON(LS_PRODUCTS);
+    return Array.isArray(arr) ? arr : [];
+  }
+  function loadCart(){
+    const arr = readJSON(LS_CART);
+    return Array.isArray(arr) ? arr : [];
+  }
+  function saveCart(cart){ writeJSON(LS_CART, cart); }
+
+  function totals(PRODUCTS, cart){
+    let count=0, subtotal=0;
+    for(const it of cart){
+      const p = PRODUCTS.find(x=>x.id===it.productId);
+      if(!p) continue;
+      const q = Number(it.qty)||0;
+      count += q;
+      subtotal += (Number(p.price)||0) * q;
+    }
+    return {count, subtotal};
+  }
+
+  const ckCartList = $("ckCartList");
+  const ckSummary = $("ckSummary");
+  const pagamento = $("pagamento");
+  const trocoWrap = $("trocoWrap");
+  const limparBtn = $("limpar");
+
+  function render(){
+    const PRODUCTS = loadProducts();
+    const cart = loadCart().filter(it => PRODUCTS.some(p=>p.id===it.productId));
+    saveCart(cart);
+
+    const t = totals(PRODUCTS, cart);
+    ckSummary.textContent = `${t.count} item(ns) • ${moneyBRL(t.subtotal)}`;
+
+    if(!cart.length){
+      ckCartList.innerHTML = `<div class="muted">Carrinho vazio. Volte e adicione produtos.</div>`;
+      return;
+    }
+
+    ckCartList.innerHTML = cart.map(it=>{
+      const p = PRODUCTS.find(x=>x.id===it.productId);
+      if(!p) return "";
+      return `
+        <div style="display:flex;gap:10px;justify-content:space-between;border-bottom:1px solid var(--line);padding:10px 0">
+          <div style="flex:1">
+            <div style="font-weight:900">${escapeXml(p.name)}</div>
+            <div class="muted" style="font-size:12px">${escapeXml(p.brand||"")} • ${escapeXml(capCategory(p.category))}</div>
+            <div class="muted" style="font-size:12px">Tamanho: <b>${escapeXml(it.size||"-")}</b>${it.color?` • Cor: <b>${escapeXml(it.color)}</b>`:""}</div>
+            <div class="muted" style="font-size:12px">${moneyBRL(p.price)} cada</div>
+          </div>
+          <div style="text-align:right;min-width:120px">
+            <div style="font-weight:900">${it.qty}x</div>
+            <div style="font-weight:900">${moneyBRL((Number(p.price)||0)*(Number(it.qty)||0))}</div>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  pagamento.addEventListener("change", ()=>{
+    trocoWrap.style.display = pagamento.value === "Dinheiro" ? "flex" : "none";
+  });
+
+  limparBtn.addEventListener("click",(e)=>{
+    e.preventDefault();
+    if(!confirm("Limpar carrinho?")) return;
+    saveCart([]);
+    render();
+  });
+
+  function buildMessage(data){
+    const PRODUCTS = loadProducts();
+    const cart = loadCart();
+    const t = totals(PRODUCTS, cart);
+
+    const now = new Date().toLocaleString("pt-BR");
+
+    const lines = [];
+    lines.push("🧾 *PEDIDO — MAGÃO TÊNIS*");
+    lines.push(`📅 *Data/Hora:* ${now}`);
+    lines.push("");
+    lines.push("*Itens:*");
+
+    cart.forEach(it=>{
+      const p = PRODUCTS.find(x=>x.id===it.productId);
+      if(!p) return;
+      lines.push(`• ${p.name} — ${it.qty}x — ${moneyBRL((Number(p.price)||0)*(Number(it.qty)||0))}`);
+      lines.push(`  (${p.brand} | ${capCategory(p.category)} | Tam: ${it.size}${it.color?` | Cor: ${it.color}`:""})`);
+    });
+
+    lines.push("");
+    lines.push(`💰 *Subtotal:* ${moneyBRL(t.subtotal)}`);
+    lines.push("🚚 *Frete:* a combinar");
+    lines.push("");
+    lines.push(`👤 *Nome:* ${data.nome}`);
+    if(data.telefone) lines.push(`📞 *Telefone:* ${data.telefone}`);
+    lines.push(`📍 *Endereço:* ${data.endereco}`);
+    if(data.obs) lines.push(`📝 *Obs:* ${data.obs}`);
+
+    let pag = data.pagamento;
+    if(data.pagamento==="Dinheiro" && data.troco) pag += ` (troco para ${data.troco})`;
+    lines.push(`💳 *Pagamento:* ${pag}`);
+
+    return lines.join("\n");
+  }
+
+  $("checkoutForm").addEventListener("submit",(e)=>{
+    e.preventDefault();
+
+    const PRODUCTS = loadProducts();
+    const cart = loadCart();
+    if(!cart.length){
+      alert("Carrinho vazio.");
+      return;
+    }
+
+    const nome = $("nome").value.trim();
+    const telefone = $("telefone").value.trim();
+    const endereco = $("endereco").value.trim();
+    const pag = pagamento.value;
+    const troco = $("troco").value.trim();
+    const obs = $("obs").value.trim();
+
+    if(!nome || !endereco || !pag){
+      alert("Preencha nome, endereço e pagamento.");
+      return;
+    }
+
+    const msg = buildMessage({nome, telefone, endereco, pagamento: pag, troco, obs});
+    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank", "noopener");
+  });
+
+  // init
+  render();
+})();(function () {
   const WHATSAPP_NUMBER = "5538998347326"; // 55 + DDD + número
   const LS_CART = "magao_cart_v2";
   const LS_PRODUCTS = "magao_products_v2";
@@ -275,3 +434,4 @@
   // init
   renderAll();
 })();
+
