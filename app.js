@@ -1,15 +1,34 @@
 (function () {
-  const LS_CART = "magao_cart_v1";
+  const LS_CART = "magao_cart_v2";
   const LS_LAST_CATEGORY = "magao_category_v1";
-  const LS_PRODUCTS = "magao_products_v1";
+  const LS_PRODUCTS = "magao_products_v2";
 
-  function escapeXml(unsafe) {
-    return String(unsafe).replace(/[<>&'"]/g, c => ({
-      "<": "&lt;", ">": "&gt;", "&": "&amp;", "'": "&apos;", '"': "&quot;"
-    }[c]));
+  function normalize(s) {
+    return (s || "")
+      .toString()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
   }
 
-  function svgDataUri(text) {
+  function moneyBRL(value) {
+    return (Number(value) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  }
+
+  function capCategory(cat) {
+    const map = { corrida: "Corrida", casual: "Casual", basket: "Basquete", skate: "Skate" };
+    return map[cat] || cat;
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, (m) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+    }[m]));
+  }
+
+  function defaultSvg(name) {
+    const text = (name || "Produto").split(" ").slice(0, 2).join(" ");
     const svg = `
       <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600">
         <defs>
@@ -20,7 +39,7 @@
         </defs>
         <rect width="100%" height="100%" fill="url(#g)"/>
         <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
-          font-family="Arial" font-size="44" fill="#e9ecf2" opacity="0.95">${escapeXml(text)}</text>
+          font-family="Arial" font-size="44" fill="#e9ecf2" opacity="0.95">${escapeHtml(text)}</text>
       </svg>`;
     return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.trim());
   }
@@ -34,26 +53,11 @@
         category: "corrida",
         price: 249.9,
         oldPrice: 329.9,
-        sizeInfo: "Num: 37 ao 43",
+        sizes: ["37", "38", "39", "40", "41", "42", "43"],
+        colors: ["Preto", "Branco"],
         desc: "Leve, confortável e com boa absorção de impacto.",
-        mlLink: "https://www.mercadolivre.com.br/",
         image: "",
-        active: true,
-        tag: ""
-      },
-      {
-        id: "mt-002",
-        name: "Tênis Casual Street Lux",
-        brand: "Urban",
-        category: "casual",
-        price: 189.9,
-        oldPrice: 229.9,
-        sizeInfo: "Num: 36 ao 42",
-        desc: "Estilo para o dia a dia, combina com tudo.",
-        mlLink: "https://www.mercadolivre.com.br/",
-        image: "",
-        active: true,
-        tag: ""
+        active: true
       }
     ];
   }
@@ -69,13 +73,16 @@
     return defs;
   }
 
-  // Carrega produtos e garante imagem
-  let PRODUCTS = loadProducts().map(p => {
-    const img = (p.image && p.image.startsWith("http")) ? p.image : (p.image || svgDataUri((p.name || "Produto").split(" ").slice(0, 2).join(" ")));
-    return { ...p, image: img, active: !!p.active };
-  });
+  function hydrateProducts(list) {
+    return list.map(p => ({
+      ...p,
+      active: !!p.active,
+      sizes: Array.isArray(p.sizes) ? p.sizes : [],
+      colors: Array.isArray(p.colors) ? p.colors : [],
+      image: p.image || defaultSvg(p.name)
+    }));
+  }
 
-  // --- Carrinho ---
   function readCart() {
     try {
       const raw = localStorage.getItem(LS_CART);
@@ -85,32 +92,51 @@
       return [];
     }
   }
-
   function writeCart(cart) {
     localStorage.setItem(LS_CART, JSON.stringify(cart));
   }
 
-  function addToCart(productId) {
+  function cartKey(item) {
+    return `${item.productId}__${item.size || ""}__${item.color || ""}`;
+  }
+
+  function addToCart(productId, size, color) {
+    const PRODUCTS = hydrateProducts(loadProducts());
     const p = PRODUCTS.find(x => x.id === productId && x.active);
     if (!p) {
       alert("Esse produto não está disponível.");
       return;
     }
+
+    if (!size) {
+      alert("Selecione o tamanho.");
+      return;
+    }
+    if (p.colors.length && !color) {
+      alert("Selecione a cor.");
+      return;
+    }
+
     const cart = readCart();
-    const item = cart.find(i => i.productId === productId);
+    const key = cartKey({ productId, size, color: color || "" });
+    const item = cart.find(i => cartKey(i) === key);
+
     if (item) item.qty += 1;
-    else cart.push({ productId, qty: 1 });
+    else cart.push({ productId, size, color: color || "", qty: 1 });
+
     writeCart(cart);
     renderCartUI();
   }
 
-  function setQty(productId, qty) {
+  function setQtyByKey(key, qty) {
     const cart = readCart();
-    const idx = cart.findIndex(i => i.productId === productId);
+    const idx = cart.findIndex(i => cartKey(i) === key);
     if (idx === -1) return;
+
     const nextQty = Math.max(0, Number(qty) || 0);
     if (nextQty === 0) cart.splice(idx, 1);
     else cart[idx].qty = nextQty;
+
     writeCart(cart);
     renderCartUI();
   }
@@ -120,10 +146,11 @@
     renderCartUI();
   }
 
-  function cartTotals() {
+  function cartTotals(PRODUCTS) {
     const cart = readCart();
     let count = 0;
     let subtotal = 0;
+
     for (const it of cart) {
       const p = PRODUCTS.find(x => x.id === it.productId);
       if (!p) continue;
@@ -133,11 +160,7 @@
     return { count, subtotal };
   }
 
-  function moneyBRL(value) {
-    return (Number(value) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-  }
-
-  // --- Render catálogo ---
+  // --- UI ---
   const grid = document.getElementById("grid");
   const searchInput = document.getElementById("searchInput");
   const clearSearchBtn = document.getElementById("clearSearchBtn");
@@ -148,85 +171,6 @@
   let activeCategory = localStorage.getItem(LS_LAST_CATEGORY) || "all";
   let query = "";
 
-  function normalize(s) {
-    return (s || "")
-      .toString()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .trim();
-  }
-
-  function capCategory(cat) {
-    const map = { corrida: "Corrida", casual: "Casual", basket: "Basquete", skate: "Skate" };
-    return map[cat] || cat;
-  }
-
-  function escapeHtml(str) {
-    return String(str).replace(/[&<>"']/g, (m) => ({
-      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
-    }[m]));
-  }
-
-  function filteredProducts() {
-    const q = normalize(query);
-    return PRODUCTS
-      .filter(p => p.active) // só ativos
-      .filter(p => {
-        const inCat = activeCategory === "all" || p.category === activeCategory;
-        if (!inCat) return false;
-        if (!q) return true;
-        const hay = normalize(`${p.name} ${p.brand} ${p.category} ${p.desc} ${p.tag || ""}`);
-        return hay.includes(q);
-      });
-  }
-
-  function renderGrid() {
-    // Recarrega produtos (caso admin altere e o usuário volte pro index sem recarregar hard)
-    PRODUCTS = loadProducts().map(p => {
-      const img = (p.image && p.image.startsWith("http")) ? p.image : (p.image || svgDataUri((p.name || "Produto").split(" ").slice(0, 2).join(" ")));
-      return { ...p, image: img, active: !!p.active };
-    });
-
-    const list = filteredProducts();
-    grid.innerHTML = list.map(p => `
-      <article class="card">
-        <div class="card__img">
-          <img src="${p.image}" alt="${escapeHtml(p.name)}" />
-        </div>
-        <div class="card__body">
-          <div class="card__title">${escapeHtml(p.name)}</div>
-          <div class="card__meta">
-            <span class="pill">${escapeHtml(p.brand)}</span>
-            <span class="pill">${escapeHtml(capCategory(p.category))}</span>
-            <span class="pill">${escapeHtml(p.sizeInfo)}</span>
-            ${p.tag ? `<span class="pill">${escapeHtml(p.tag)}</span>` : ""}
-          </div>
-          <div class="muted">${escapeHtml(p.desc)}</div>
-
-          <div class="priceRow">
-            <div>
-              <div class="price">${moneyBRL(p.price)}</div>
-              <div class="old">${p.oldPrice ? moneyBRL(p.oldPrice) : "—"}</div>
-            </div>
-          </div>
-
-          <div class="card__actions">
-            <button class="btn btn--primary" data-add="${p.id}" type="button">Adicionar ao carrinho</button>
-            <a class="btn" href="${p.mlLink}" target="_blank" rel="noopener">Comprar (link)</a>
-          </div>
-        </div>
-      </article>
-    `).join("");
-
-    const msg =
-      activeCategory === "all" && !query
-        ? "Mostrando todos os produtos"
-        : `Encontrados ${list.length} produto(s)`;
-    resultsInfo.textContent = msg;
-  }
-
-  // --- Drawer carrinho ---
   const cartDrawer = document.getElementById("cartDrawer");
   const openCartBtn = document.getElementById("openCartBtn");
   const cartItemsEl = document.getElementById("cartItems");
@@ -234,6 +178,10 @@
   const cartSummaryEl = document.getElementById("cartSummary");
   const subtotalEl = document.getElementById("subtotal");
   const clearCartBtn = document.getElementById("clearCartBtn");
+
+  function setActiveChip() {
+    chips.forEach(ch => ch.classList.toggle("is-active", ch.dataset.category === activeCategory));
+  }
 
   function openDrawer() {
     cartDrawer.classList.add("is-open");
@@ -247,20 +195,96 @@
     document.body.style.overflow = "";
   }
 
-  function renderCartUI() {
-    // Recarrega produtos para refletir alterações
-    PRODUCTS = loadProducts().map(p => {
-      const img = (p.image && p.image.startsWith("http")) ? p.image : (p.image || svgDataUri((p.name || "Produto").split(" ").slice(0, 2).join(" ")));
-      return { ...p, image: img, active: !!p.active };
-    });
+  function filteredProducts(PRODUCTS) {
+    const q = normalize(query);
+    return PRODUCTS
+      .filter(p => p.active)
+      .filter(p => {
+        const inCat = activeCategory === "all" || p.category === activeCategory;
+        if (!inCat) return false;
+        if (!q) return true;
+        const hay = normalize(`${p.name} ${p.brand} ${p.category} ${p.desc}`);
+        return hay.includes(q);
+      });
+  }
 
+  function renderGrid() {
+    const PRODUCTS = hydrateProducts(loadProducts());
+    const list = filteredProducts(PRODUCTS);
+
+    grid.innerHTML = list.map(p => {
+      const hasColors = p.colors && p.colors.length;
+
+      const sizeOptions = p.sizes.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
+      const colorOptions = hasColors
+        ? p.colors.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("")
+        : "";
+
+      return `
+        <article class="card">
+          <div class="card__img">
+            <img src="${p.image}" alt="${escapeHtml(p.name)}" />
+          </div>
+          <div class="card__body">
+            <div class="card__title">${escapeHtml(p.name)}</div>
+
+            <div class="card__meta">
+              <span class="pill">${escapeHtml(p.brand)}</span>
+              <span class="pill">${escapeHtml(capCategory(p.category))}</span>
+            </div>
+
+            <div class="muted">${escapeHtml(p.desc)}</div>
+
+            <div class="priceRow">
+              <div>
+                <div class="price">${moneyBRL(p.price)}</div>
+                <div class="old">${p.oldPrice ? moneyBRL(p.oldPrice) : "—"}</div>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+              <label class="pill" style="display:flex;flex-direction:column;gap:6px">
+                Tamanho
+                <select data-size="${p.id}" style="border:0;outline:0;background:transparent;color:var(--text)">
+                  <option value="">Selecione</option>
+                  ${sizeOptions}
+                </select>
+              </label>
+
+              <label class="pill" style="display:flex;flex-direction:column;gap:6px;${hasColors ? "" : "opacity:.55"}">
+                Cor
+                <select data-color="${p.id}" ${hasColors ? "" : "disabled"} style="border:0;outline:0;background:transparent;color:var(--text)">
+                  <option value="">${hasColors ? "Selecione" : "Sem cor"}</option>
+                  ${colorOptions}
+                </select>
+              </label>
+            </div>
+
+            <div class="card__actions">
+              <button class="btn btn--primary" data-add="${p.id}" type="button">Adicionar ao carrinho</button>
+            </div>
+          </div>
+        </article>
+      `;
+    }).join("");
+
+    const msg =
+      activeCategory === "all" && !query
+        ? "Mostrando todos os produtos"
+        : `Encontrados ${list.length} produto(s)`;
+    resultsInfo.textContent = msg;
+  }
+
+  function renderCartUI() {
+    const PRODUCTS = hydrateProducts(loadProducts());
     const cart = readCart();
-    // remove do carrinho itens que não existem mais
+
+    // remove itens que não existem mais
     const validIds = new Set(PRODUCTS.map(p => p.id));
     const cleaned = cart.filter(i => validIds.has(i.productId));
     if (cleaned.length !== cart.length) writeCart(cleaned);
 
-    const totals = cartTotals();
+    const totals = cartTotals(PRODUCTS);
     cartCountEl.textContent = String(totals.count);
     cartSummaryEl.textContent = `${totals.count} item(ns)`;
     subtotalEl.textContent = moneyBRL(totals.subtotal);
@@ -276,6 +300,8 @@
     cartItemsEl.innerHTML = cleaned.map(it => {
       const p = PRODUCTS.find(x => x.id === it.productId);
       if (!p) return "";
+      const key = cartKey(it);
+
       return `
         <div class="cartItem">
           <div class="cartItem__thumb">
@@ -284,28 +310,24 @@
 
           <div>
             <div class="cartItem__title">${escapeHtml(p.name)}</div>
-            <div class="cartItem__muted">${moneyBRL(p.price)} • ${escapeHtml(p.sizeInfo)}</div>
-            <div class="cartItem__muted">${escapeHtml(p.brand)} • ${escapeHtml(capCategory(p.category))}</div>
+            <div class="cartItem__muted">${moneyBRL(p.price)} • ${escapeHtml(p.brand)} • ${escapeHtml(capCategory(p.category))}</div>
+            <div class="cartItem__muted">Tamanho: <b>${escapeHtml(it.size || "-")}</b>${it.color ? ` • Cor: <b>${escapeHtml(it.color)}</b>` : ""}</div>
           </div>
 
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
             <div class="qty" aria-label="Quantidade">
-              <button type="button" data-dec="${p.id}">−</button>
+              <button type="button" data-dec="${key}">−</button>
               <span>${it.qty}</span>
-              <button type="button" data-inc="${p.id}">+</button>
+              <button type="button" data-inc="${key}">+</button>
             </div>
             <div style="font-weight:900">${moneyBRL((Number(p.price)||0) * it.qty)}</div>
-            <button class="btn btn--ghost" type="button" data-del="${p.id}" style="padding:8px 10px">Remover</button>
+            <button class="btn btn--ghost" type="button" data-del="${key}" style="padding:8px 10px">Remover</button>
           </div>
         </div>`;
     }).join("");
   }
 
-  // --- Eventos ---
-  function setActiveChip() {
-    chips.forEach(ch => ch.classList.toggle("is-active", ch.dataset.category === activeCategory));
-  }
-
+  // events
   chips.forEach(ch => {
     ch.addEventListener("click", () => {
       activeCategory = ch.dataset.category;
@@ -318,7 +340,14 @@
   grid.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-add]");
     if (!btn) return;
-    addToCart(btn.getAttribute("data-add"));
+
+    const id = btn.getAttribute("data-add");
+    const sizeSel = grid.querySelector(`[data-size="${CSS.escape(id)}"]`);
+    const colorSel = grid.querySelector(`[data-color="${CSS.escape(id)}"]`);
+    const size = sizeSel ? sizeSel.value : "";
+    const color = colorSel ? colorSel.value : "";
+
+    addToCart(id, size, color);
     openDrawer();
   });
 
@@ -329,25 +358,16 @@
     const dec = e.target.closest("[data-dec]");
     const del = e.target.closest("[data-del]");
 
-    if (inc) {
-      const id = inc.getAttribute("data-inc");
-      const cart = readCart();
-      const item = cart.find(i => i.productId === id);
-      setQty(id, (item?.qty || 0) + 1);
-    }
-
-    if (dec) {
-      const id = dec.getAttribute("data-dec");
-      const cart = readCart();
-      const item = cart.find(i => i.productId === id);
-      setQty(id, (item?.qty || 0) - 1);
-    }
-
-    if (del) {
-      const id = del.getAttribute("data-del");
-      setQty(id, 0);
-    }
+    if (inc) setQtyByKey(inc.getAttribute("data-inc"), getQtyByKey(inc.getAttribute("data-inc")) + 1);
+    if (dec) setQtyByKey(dec.getAttribute("data-dec"), getQtyByKey(dec.getAttribute("data-dec")) - 1);
+    if (del) setQtyByKey(del.getAttribute("data-del"), 0);
   });
+
+  function getQtyByKey(key){
+    const cart = readCart();
+    const item = cart.find(i => cartKey(i) === key);
+    return item ? item.qty : 0;
+  }
 
   openCartBtn.addEventListener("click", openDrawer);
   clearCartBtn.addEventListener("click", clearCart);
